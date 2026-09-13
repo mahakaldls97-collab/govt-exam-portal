@@ -135,6 +135,10 @@ async def disclaimer_page(request: Request):
 
 # ----------------- GOOGLE SEARCH & SEO (ROBOTS & SITEMAP) ----------------- #
 
+@app.get("/google5d3c641d428c5323.html", response_class=Response)
+async def google_verification():
+    return Response(content="google-site-verification: google5d3c641d428c5323.html", media_type="text/html")
+
 @app.get("/robots.txt", response_class=Response)
 async def robots_txt(request: Request):
     base_url = str(request.base_url).rstrip('/')
