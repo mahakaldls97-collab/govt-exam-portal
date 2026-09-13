@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category_name }} Government Exams 2026 - Notifications, Dates, Syllabus & Admit Card{% endblock %}
+
+{% block meta_description %}Find all {{ category_name }} government exam notifications 2026, eligibility criteria, application dates, admit cards, results and direct official links.{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Top Back Navigation Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs sm:text-sm border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow transition group">
+            <i class="fa-solid fa-arrow-left text-blue-600 group-hover:-translate-x-1 transition-transform"></i>
+            <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
+        </a>
+        <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition border border-slate-200 cursor-pointer">
+            <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
+            <span>पिछला पेज (Back)</span>
+        </button>
+    </div>
+
+    <!-- Breadcrumb Navigation -->
+    <nav class="flex text-xs text-slate-500 font-medium items-center gap-1.5 py-1">
+        <a href="/" class="hover:text-blue-600 transition flex items-center gap-1">
+            <i class="fa-solid fa-house text-[10px]"></i> Home
+        </a>
+        <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+        <span>Categories</span>
+        <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+        <span class="text-slate-800 font-semibold">{{ category_name }}</span>
+    </nav>
+
+    <!-- Header Banner -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-blue-50 text-blue-700">Category</span>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
+                {{ category_name }} Government Examinations 2026
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                {{ category_name }} श्रेणी के सभी नवीनतम भर्ती विज्ञापन, प्रवेश पत्र और परिणाम की सूची।
+            </p>
+        </div>
+        <div class="bg-blue-50 border border-blue-100 px-4 py-2 rounded-xl text-center">
+            <span class="block text-2xl font-black text-blue-700">{{ exams|length }}</span>
+            <span class="text-[11px] font-semibold text-blue-600 uppercase tracking-wider">Active Exams</span>
+        </div>
+    </div>
+
+    <!-- Exams Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for exam in exams %}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col overflow-hidden group">
+            
+            <div class="p-5 flex-grow space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-rose-500"></i> {{ exam.state or 'All India' }}
+                        </span>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700 truncate max-w-[140px]">
+                            {{ exam.board_name }}
+                        </span>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        {{ exam.status }}
+                    </span>
+                </div>
+
+                <a href="/exam/{{ exam.slug }}" class="block">
+                    <h3 class="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                        {{ exam.title }}
+                    </h3>
+                </a>
+
+                <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                    {{ exam.short_description }}
+                </p>
+
+                <div class="pt-3 border-t border-slate-100">
+                    <a href="{{ exam.link_apply_online if exam.link_apply_online else exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        <span>सीधे सरकारी वेबसाइट पर जाएं (Official Portal)</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+                <a href="/exam/{{ exam.slug }}" class="text-blue-600 hover:underline font-bold">
+                    विवरण देखें (View Details) →
+                </a>
+                <span class="text-slate-400 text-[11px]">{{ exam.board_name }}</span>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="col-span-full bg-white rounded-3xl p-12 text-center border border-slate-200">
+            <div class="w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-xl mb-3">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">इस श्रेणी में कोई परीक्षा नहीं मिली</h3>
+            <p class="text-xs text-slate-500 mt-1">जल्द ही इस श्रेणी की नई सूचनाएं अपडेट की जाएंगी।</p>
+            <a href="/" class="mt-4 inline-block bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl">
+                होमपेज पर वापस जाएं
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Bottom Back to Home Bar -->
+    <div class="pt-6 pb-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <a href="/" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs sm:text-sm border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow transition group">
+            <i class="fa-solid fa-arrow-left text-blue-600 group-hover:-translate-x-1 transition-transform"></i>
+            <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
+        </a>
+        <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition border border-slate-200 cursor-pointer">
+            <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
+            <span>पिछला पेज (Back)</span>
+        </button>
+    </div>
+
+</div>
+{% endblock %}

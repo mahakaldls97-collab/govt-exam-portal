@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results: {{ search_query }} - Sarkari Exam Hub{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Top Back Navigation Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs sm:text-sm border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow transition group">
+            <i class="fa-solid fa-arrow-left text-blue-600 group-hover:-translate-x-1 transition-transform"></i>
+            <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
+        </a>
+        <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition border border-slate-200 cursor-pointer">
+            <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
+            <span>पिछला पेज (Back)</span>
+        </button>
+    </div>
+
+    <!-- Header Banner -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-blue-50 text-blue-700">Search Results</span>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
+                "{{ search_query }}" के परिणाम
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                आपकी खोज के आधार पर {{ exams|length }} परीक्षाएं मिली हैं।
+            </p>
+        </div>
+    </div>
+
+    <!-- Search & Filter Form -->
+    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+        <form action="/search" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-7">
+                <input 
+                    type="text" 
+                    name="q" 
+                    value="{{ search_query if search_query != selected_state else '' }}"
+                    placeholder="Search exam name, board, post..." 
+                    class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+            <div class="sm:col-span-3">
+                <select name="state" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- All States (सभी राज्य) --</option>
+                    {% for st in all_states %}
+                    <option value="{{ st.state }}" {% if selected_state == st.state %}selected{% endif %}>
+                        {{ st.state }} ({{ st.count }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    <span>Search</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for exam in exams %}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col overflow-hidden group">
+            <div class="p-5 flex-grow space-y-3">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-rose-500"></i> {{ exam.state or 'All India' }}
+                        </span>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                            {{ exam.category }}
+                        </span>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        {{ exam.status }}
+                    </span>
+                </div>
+
+                <a href="/exam/{{ exam.slug }}" class="block">
+                    <h3 class="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                        {{ exam.title }}
+                    </h3>
+                </a>
+
+                <div class="text-xs text-slate-500 font-medium">
+                    <i class="fa-regular fa-building text-slate-400 mr-1"></i> {{ exam.board_name }}
+                </div>
+
+                <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                    {{ exam.short_description }}
+                </p>
+
+                <div class="pt-3 border-t border-slate-100">
+                    <a href="{{ exam.link_apply_online if exam.link_apply_online else exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        <span>सीधे सरकारी वेबसाइट पर जाएं (Official Portal)</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+                <a href="/exam/{{ exam.slug }}" class="text-blue-600 hover:underline font-bold">
+                    विवरण देखें (View Details) →
+                </a>
+                <span class="text-slate-400 text-[11px]">{{ exam.board_name }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full bg-white rounded-3xl p-12 text-center border border-slate-200">
+            <div class="w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-xl mb-3">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">"{{ search_query }}" के लिए कोई परिणाम नहीं मिला</h3>
+            <p class="text-xs text-slate-500 mt-1">कृपया सही वर्तनी (Spelling) की जांच करें अथवा सामान्य शब्द जैसे CTET, SSC, UPSC आदि खोजें।</p>
+            <a href="/" class="mt-4 inline-block bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl">
+                होमपेज पर वापस जाएं
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Bottom Back to Home Bar -->
+    <div class="pt-6 pb-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <a href="/" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs sm:text-sm border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow transition group">
+            <i class="fa-solid fa-arrow-left text-blue-600 group-hover:-translate-x-1 transition-transform"></i>
+            <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
+        </a>
+        <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition border border-slate-200 cursor-pointer">
+            <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
+            <span>पिछला पेज (Back)</span>
+        </button>
+    </div>
+
+</div>
+{% endblock %}

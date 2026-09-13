@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}Sarkari Exam Hub 2026 - Govt Jobs, CTET 2026, SSC, Railway, UPSC, Admit Card, Results{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+    <!-- Hero Search & Welcome Section -->
+    <div class="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute right-1/4 -top-10 w-60 h-60 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-3xl mx-auto text-center space-y-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-200 border border-blue-400/30">
+                <i class="fa-solid fa-shield-halved text-amber-400"></i> 100% Verified Official Government Links
+            </span>
+            
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
+                सभी सरकारी परीक्षाओं की सटीक जानकारी <br class="hidden sm:inline">
+                <span class="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent">
+                    एक ही जगह पर
+                </span>
+            </h1>
+
+            <p class="text-slate-300 text-sm sm:text-base font-normal max-w-2xl mx-auto">
+                CTET 2026, SSC CGL, UPSC, Railway NTPC, REET, Banking आदि की Notification, Dates, Eligibility, Fees, Syllabus, Admit Card और Result की जानकारी सीधा Official Portals के साथ।
+            </p>
+
+            <!-- Large Hero Search Box -->
+            <form action="/search" method="GET" class="pt-2 max-w-xl mx-auto">
+                <div class="relative flex items-center shadow-2xl rounded-2xl overflow-hidden bg-white p-1.5">
+                    <span class="pl-3.5 pr-2 text-slate-400 text-lg">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input 
+                        type="text" 
+                        name="q" 
+                        placeholder="Search CTET 2026, SSC CGL, RRB NTPC, REET..." 
+                        class="w-full text-slate-900 placeholder-slate-400 text-sm sm:text-base px-2 py-2.5 focus:outline-none font-medium"
+                        required
+                    >
+                    <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-5 sm:px-7 py-2.5 rounded-xl transition text-sm flex items-center gap-2 shrink-0">
+                        <span>Search</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Trending Quick Tags -->
+            <div class="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
+                <span class="text-slate-400 font-medium">Trending:</span>
+                <a href="/category/Police" class="px-2.5 py-1 rounded-lg bg-rose-500/30 hover:bg-rose-500/40 text-rose-200 font-bold transition border border-rose-400/40 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span> 🚨 Police भर्ती (119+)
+                </a>
+                <a href="/exam/rajasthan-cet-12th-level-2026-notification" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold transition border border-amber-400/30 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Raj CET (12th)
+                </a>
+                <a href="/exam/rajasthan-cet-graduation-level-2026-notification" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/10">
+                    Raj CET (Graduation)
+                </a>
+                <a href="/exam/haryana-cet-2026-group-c-d-recruitment" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/10">
+                    Haryana CET
+                </a>
+                <a href="/exam/ctet-2026" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/10 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> CTET 2026
+                </a>
+                <a href="/exam/ssc-gd-constable-2026-notification-recruitment" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/10">
+                    SSC GD 39K+
+                </a>
+                <a href="/exam/railway-rrb-alp-assistant-loco-pilot-2026-recruitment" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/10">
+                    RRB ALP 18K+
+                </a>
+                <a href="/exam/upsssc-pet-2026-notification-preliminary-eligibility-test" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/10">
+                    UPSSSC PET
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Direct Portals Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <a href="/category/State" class="bg-gradient-to-br from-amber-50 to-orange-50 p-3 rounded-xl border border-amber-200 hover:border-amber-400 hover:shadow-md transition flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 transition shadow-sm">
+                <i class="fa-solid fa-file-shield"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-800 group-hover:text-amber-700">CET & State</div>
+                <div class="text-[11px] text-slate-500">Raj CET, HSSC</div>
+            </div>
+        </a>
+
+        <a href="/category/Teaching" class="bg-white p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg group-hover:scale-105 transition">
+                <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600">Teaching</div>
+                <div class="text-[11px] text-slate-500">CTET, REET, KVS</div>
+            </div>
+        </a>
+
+        <a href="/category/SSC" class="bg-white p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg group-hover:scale-105 transition">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600">SSC Exams</div>
+                <div class="text-[11px] text-slate-500">CGL, GD, MTS</div>
+            </div>
+        </a>
+
+        <a href="/category/Railway" class="bg-white p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg group-hover:scale-105 transition">
+                <i class="fa-solid fa-train"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600">Railway RRB</div>
+                <div class="text-[11px] text-slate-500">ALP, Tech, NTPC</div>
+            </div>
+        </a>
+
+        <a href="/category/Police" class="bg-gradient-to-br from-rose-50 to-pink-50 p-3 rounded-xl border border-rose-300 hover:border-rose-500 hover:shadow-md transition flex items-center gap-3 group relative overflow-hidden">
+            <span class="absolute -right-2 -top-2 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">119+</span>
+            <div class="w-10 h-10 rounded-lg bg-rose-600 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 transition shadow-sm">
+                <i class="fa-solid fa-person-military-pointing"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-rose-900 group-hover:text-rose-700">Police & Defense</div>
+                <div class="text-[11px] text-rose-700/80 font-medium">UP, Raj, Delhi Police</div>
+            </div>
+        </a>
+
+        <a href="/category/Banking" class="bg-white p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold text-lg group-hover:scale-105 transition">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600">Banking</div>
+                <div class="text-[11px] text-slate-500">IBPS, SBI, PO</div>
+            </div>
+        </a>
+
+        <a href="/category/UPSC" class="bg-white p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-lg group-hover:scale-105 transition">
+                <i class="fa-solid fa-landmark"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600">Civil Services</div>
+                <div class="text-[11px] text-slate-500">IAS, IPS, RAS</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- All-India State Quick Filter Pills -->
+    <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <h3 class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs shadow-xs">
+                    <i class="fa-solid fa-earth-asia"></i>
+                </span>
+                <span>राज्य अनुसार सरकारी नौकरियां (State-wise Government Vacancies)</span>
+            </h3>
+            <span class="text-[11px] text-slate-500 font-semibold bg-slate-100 px-2.5 py-0.5 rounded-full">
+                28 States + Central Vacancies Auto-Synced
+            </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-semibold pt-1">
+            <a href="/search?q=" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white shadow-xs hover:bg-blue-700 transition">
+                🇮🇳 All India / Central
+            </a>
+            {% for st in all_states %}
+                {% if st.state != 'All India' and st.count > 0 %}
+                <a href="/search?state={{ st.state }}" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition border border-slate-200 hover:border-blue-300 flex items-center gap-1.5">
+                    <span>📍 {{ st.state }}</span>
+                    <span class="text-[10px] bg-slate-200/80 px-1.5 py-0.2 rounded-full font-bold text-slate-600">{{ st.count }}</span>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- DEDICATED POLICE & DEFENSE RECRUITMENT SHOWCASE SECTION -->
+    <div class="bg-gradient-to-br from-rose-900 via-slate-900 to-slate-950 rounded-3xl p-6 sm:p-7 text-white shadow-xl border border-rose-800/40 space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-rose-800/30 pb-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
+                        🚨 वर्दीधारी भर्तियां (Police & Defense)
+                    </span>
+                    <span class="text-xs bg-white/10 px-2.5 py-0.5 rounded-full font-bold text-slate-300">
+                        119+ Active Vacancies
+                    </span>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-black mt-2 text-white">
+                    पुलिस एवं रक्षा बल भर्ती 2026 (Police Constable, SI, Army & Defense)
+                </h2>
+                <p class="text-xs sm:text-sm text-rose-200/80 mt-0.5">
+                    राजस्थान पुलिस, यूपी पुलिस, दिल्ली पुलिस, एसएससी जीडी कांस्टेबल एवं सेना भर्ती के सीधे आधिकारिक लिंक
+                </p>
+            </div>
+            <a href="/category/Police" class="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 shrink-0">
+                <span>सभी पुलिस भर्तियां देखें (View All 119+)</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+
+        <!-- Police Fast-Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+            {% for exam in (police_exams if police_exams else [])[:6] %}
+            <div class="bg-white/10 hover:bg-white/15 backdrop-blur rounded-2xl p-4 border border-white/10 transition flex flex-col justify-between group">
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-rose-500/30 text-rose-200 flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-[9px]"></i> {{ exam.state or 'All India' }}
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                            {{ exam.status }}
+                        </span>
+                    </div>
+                    <a href="/exam/{{ exam.slug }}" class="block text-sm font-bold text-white group-hover:text-rose-300 transition line-clamp-2 leading-snug">
+                        {{ exam.title }}
+                    </a>
+                    <div class="text-[11px] text-slate-300 truncate">
+                        <i class="fa-regular fa-building text-slate-400 mr-1"></i> {{ exam.board_name }}
+                    </div>
+                </div>
+
+                <div class="pt-3 mt-3 border-t border-white/10 flex items-center justify-between gap-2">
+                    <a href="/exam/{{ exam.slug }}" class="text-xs text-rose-300 hover:underline font-bold">
+                        विवरण देखें →
+                    </a>
+                    <a href="{{ exam.link_apply_online if exam.link_apply_online else exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1">
+                        <span>Apply / Official ↗</span>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 3-Column Fast-Access Grid (Active Forms | Upcoming Exams | Admit Cards) -->
+    <div>
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+                    <span class="w-2.5 h-6 bg-emerald-500 rounded-full inline-block"></span>
+                    सक्रिय व आगामी परीक्षाएं (Currently Running Forms & Upcoming Exams)
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500">केवल वही परीक्षाएं जिनके ऑनलाइन आवेदन चालू हैं या जिनकी परीक्षाएं लगने वाली हैं</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Column 1: ACTIVE ONLINE FORMS (चालू ऑनलाइन आवेदन) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-5 py-3.5 flex items-center justify-between">
+                    <div class="flex items-center gap-2 font-bold text-base">
+                        <i class="fa-solid fa-file-pen text-lg"></i>
+                        <span>चालू आवेदन (Active Forms)</span>
+                    </div>
+                    <span class="text-xs bg-emerald-800/60 px-2 py-0.5 rounded-full font-semibold">Official Links</span>
+                </div>
+                <div class="p-3 divide-y divide-slate-100 flex-grow">
+                    {% for exam in active_forms_exams %}
+                    <div class="py-2.5 px-2 rounded-lg hover:bg-slate-50 flex items-center justify-between gap-3 transition">
+                        <div class="flex-1 min-w-0">
+                            <a href="/exam/{{ exam.slug }}" class="text-xs font-bold text-slate-800 hover:text-emerald-700 line-clamp-2 block">
+                                {{ exam.title }}
+                            </a>
+                            <div class="flex items-center gap-1.5 mt-1 truncate">
+                                <span class="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 shrink-0">
+                                    <i class="fa-solid fa-location-dot text-rose-500 text-[9px] mr-1"></i> {{ exam.state or 'All India' }}
+                                </span>
+                                <span class="text-[11px] text-slate-500 truncate"><i class="fa-regular fa-building text-[10px]"></i> {{ exam.board_name }}</span>
+                            </div>
+                        </div>
+                        <a href="{{ exam.link_apply_online if exam.link_apply_online else exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl shrink-0 flex items-center gap-1 shadow-xs transition" title="Go directly to official portal">
+                            <span>Apply ↗</span>
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-slate-400 p-4 text-center">No active forms</p>
+                    {% endfor %}
+                </div>
+                <div class="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                    <a href="/search?status=Open" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center justify-center gap-1">
+                        <span>View All Active Forms</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Column 2: UPCOMING EXAMS (होने वाली परीक्षाएं) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-5 py-3.5 flex items-center justify-between">
+                    <div class="flex items-center gap-2 font-bold text-base">
+                        <i class="fa-regular fa-calendar-check text-lg"></i>
+                        <span>आगामी परीक्षाएं (Upcoming)</span>
+                    </div>
+                    <span class="text-xs bg-blue-800/60 px-2 py-0.5 rounded-full font-semibold">Official Links</span>
+                </div>
+                <div class="p-3 divide-y divide-slate-100 flex-grow">
+                    {% for exam in upcoming_exams %}
+                    <div class="py-2.5 px-2 rounded-lg hover:bg-slate-50 flex items-center justify-between gap-3 transition">
+                        <div class="flex-1 min-w-0">
+                            <a href="/exam/{{ exam.slug }}" class="text-xs font-bold text-slate-800 hover:text-blue-700 line-clamp-2 block">
+                                {{ exam.title }}
+                            </a>
+                            <div class="flex items-center gap-1.5 mt-1 truncate">
+                                <span class="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 shrink-0">
+                                    <i class="fa-solid fa-location-dot text-rose-500 text-[9px] mr-1"></i> {{ exam.state or 'All India' }}
+                                </span>
+                                <span class="text-[11px] text-slate-500 truncate"><i class="fa-regular fa-building text-[10px]"></i> {{ exam.board_name }}</span>
+                            </div>
+                        </div>
+                        <a href="{{ exam.link_official_website if exam.link_official_website else exam.link_notification_pdf }}" target="_blank" rel="nofollow noopener" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-2 rounded-xl shrink-0 flex items-center gap-1 shadow-xs transition" title="Go directly to official portal">
+                            <span>Official ↗</span>
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-slate-400 p-4 text-center">No upcoming notices</p>
+                    {% endfor %}
+                </div>
+                <div class="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                    <a href="/search?status=Upcoming" class="text-xs font-bold text-blue-700 hover:text-blue-800 flex items-center justify-center gap-1">
+                        <span>View All Upcoming Exams</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Column 3: ADMIT CARDS & CITY INTIMATION (प्रवेश पत्र व एग्जाम सिटी) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="bg-gradient-to-r from-purple-600 to-indigo-800 text-white px-5 py-3.5 flex items-center justify-between">
+                    <div class="flex items-center gap-2 font-bold text-base">
+                        <i class="fa-solid fa-ticket text-lg"></i>
+                        <span>प्रवेश पत्र / सिटी (Admit Card)</span>
+                    </div>
+                    <span class="text-xs bg-purple-900/60 px-2 py-0.5 rounded-full font-semibold">Official Links</span>
+                </div>
+                <div class="p-3 divide-y divide-slate-100 flex-grow">
+                    {% for exam in admit_cards_exams %}
+                    <div class="py-2.5 px-2 rounded-lg hover:bg-slate-50 flex items-center justify-between gap-3 transition">
+                        <div class="flex-1 min-w-0">
+                            <a href="/exam/{{ exam.slug }}" class="text-xs font-bold text-slate-800 hover:text-purple-700 line-clamp-2 block">
+                                {{ exam.title }}
+                            </a>
+                            <div class="flex items-center gap-1.5 mt-1 truncate">
+                                <span class="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 shrink-0">
+                                    <i class="fa-solid fa-location-dot text-rose-500 text-[9px] mr-1"></i> {{ exam.state or 'All India' }}
+                                </span>
+                                <span class="text-[11px] text-slate-500 truncate"><i class="fa-regular fa-building text-[10px]"></i> {{ exam.board_name }}</span>
+                            </div>
+                        </div>
+                        <a href="{{ exam.link_admit_card if exam.link_admit_card else exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3 py-2 rounded-xl shrink-0 flex items-center gap-1 shadow-xs transition" title="Go directly to official portal">
+                            <span>Admit Card ↗</span>
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-slate-400 p-4 text-center">No active admit cards</p>
+                    {% endfor %}
+                </div>
+                <div class="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                    <a href="/search?status=Admit+Card" class="text-xs font-bold text-purple-700 hover:text-purple-800 flex items-center justify-center gap-1">
+                        <span>View All Admit Cards</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Featured Exams Detailed Section (Only Exam Name & Direct Government Link) -->
+    <div class="pt-4">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+                    <span class="w-2.5 h-6 bg-blue-600 rounded-full inline-block"></span>
+                    सरकारी परीक्षाएं एवं आधिकारिक लिंक (Exams & Official Links)
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500">सीधे संबंधित सरकारी वेबसाइट पर जाने के लिए नीचे दिए गए बटन पर क्लिक करें</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for exam in all_exams %}
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden p-5 space-y-4">
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
+                            {{ exam.category }}
+                        </span>
+                        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {{ exam.status }}
+                        </span>
+                    </div>
+
+                    <a href="/exam/{{ exam.slug }}" class="block">
+                        <h3 class="text-base font-bold text-slate-900 hover:text-blue-600 transition leading-snug">
+                            {{ exam.title }}
+                        </h3>
+                    </a>
+
+                    <div class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                        <i class="fa-regular fa-building text-slate-400"></i>
+                        <span>{{ exam.board_name }}</span>
+                    </div>
+
+                    <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                        {{ exam.short_description }}
+                    </p>
+                </div>
+
+                <!-- Direct Government Official Link (Big Button) -->
+                <div class="pt-3 border-t border-slate-100 space-y-2">
+                    <a href="{{ exam.link_apply_online if exam.link_apply_online else exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                        <span>सीधे सरकारी वेबसाइट पर जाएं (Official Portal)</span>
+                    </a>
+
+                    <div class="flex items-center justify-between text-xs pt-1">
+                        <a href="/exam/{{ exam.slug }}" class="text-blue-600 hover:underline font-semibold">
+                            विवरण देखें (Details) →
+                        </a>
+                        {% if exam.link_notification_pdf %}
+                        <a href="{{ exam.link_notification_pdf }}" target="_blank" rel="nofollow noopener" class="text-slate-500 hover:text-slate-800 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-file-pdf text-rose-500"></i> Notification PDF
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Informational Feature Highlights -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm mt-6">
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-6 text-center">
+            हमारा पोर्टल परीक्षार्थियों के लिए क्यों सर्वश्रेष्ठ है? (Why SarkariExamHub?)
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <div class="space-y-2 p-4 rounded-2xl bg-blue-50/50">
+                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto text-xl shadow-md shadow-blue-500/20">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm">100% प्रामाणिक Official Links</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    कोई भ्रामक या फेक लिंक्स नहीं। सभी 'Apply Online', 'Admit Card' व 'Notification' बटन्स सीधे संबंधित सरकारी पोर्टल (.gov.in / .nic.in) पर रीडायरेक्ट करते हैं।
+                </p>
+            </div>
+
+            <div class="space-y-2 p-4 rounded-2xl bg-emerald-50/50">
+                <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center mx-auto text-xl shadow-md shadow-emerald-500/20">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm">तेज़ और सटीक अपडेट्स</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    CTET, SSC, UPSC, REET जैसे बड़े एग्जाम्स की तिथियां, प्रवेश पत्र या उत्तर कुंजी जारी होते ही तुरंत हमारे पोर्टल पर रियल-टाइम अपडेट कर दी जाती हैं।
+                </p>
+            </div>
+
+            <div class="space-y-2 p-4 rounded-2xl bg-amber-50/50">
+                <div class="w-12 h-12 rounded-xl bg-amber-600 text-white flex items-center justify-center mx-auto text-xl shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm">मोबाइल-फ्रेंडली व सरल लेआउट</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    बिना किसी अतिरिक्त भारी विज्ञापन या कन्फ्यूजन के, हर जानकारी (पात्रता, आयु सीमा, शुल्क, सिलेबस) साफ टेबल्स में सुव्यवस्थित रूप में मिलती है।
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

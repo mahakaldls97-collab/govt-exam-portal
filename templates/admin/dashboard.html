@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Sarkari Exam Hub{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Top Admin Header -->
+    <div class="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-500/30 text-blue-300 border border-blue-400/30">
+                Administration Panel
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-black mt-2">
+                Exam Management Dashboard
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+                नया एग्जाम पोस्ट करें, तारीखें व लिंक्स अपडेट करें या ऑटोमैटिक स्क्रैपर से सरकारी वैकेंसी फेच करें।
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <!-- 1-Click Auto Fetch Button -->
+            <form action="/portal-boss-secure-2026/auto-fetch" method="POST" class="inline">
+                <button type="submit" title="Fetch latest vacancies from government portals automatically" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-lg transition flex items-center gap-1.5 transform active:scale-98">
+                    <i class="fa-solid fa-bolt text-yellow-200"></i>
+                    <span>⚡ Auto-Fetch Now</span>
+                </button>
+            </form>
+
+            <a href="/portal-boss-secure-2026/automation" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold px-4 py-3 rounded-2xl transition border border-slate-700 flex items-center gap-1.5">
+                <i class="fa-solid fa-robot text-amber-400"></i>
+                <span>Auto-Scraper Center</span>
+            </a>
+
+            <a href="/portal-boss-secure-2026/exams/new" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-lg transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>+ Manual Add</span>
+            </a>
+
+            <!-- Prominent Logout Button -->
+            <a href="/portal-boss-secure-2026/logout" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-md transition flex items-center gap-2 border border-rose-500" title="Admin Logout">
+                <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                <span>लॉगआउट (Logout)</span>
+            </a>
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 shadow-xs">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+        <span>{{ message }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Quick Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div>
+                <span class="text-2xl font-black text-slate-900">{{ stats.total_exams }}</span>
+                <span class="block text-[11px] font-semibold text-slate-400">Total Exams</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div>
+                <span class="text-2xl font-black text-amber-600">{{ stats.auto_synced_count }}</span>
+                <span class="block text-[11px] font-semibold text-slate-400">Auto-Synced</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-file-pen"></i>
+            </div>
+            <div>
+                <span class="text-2xl font-black text-emerald-600">{{ stats.active_applications }}</span>
+                <span class="block text-[11px] font-semibold text-slate-400">Active Forms</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-ticket"></i>
+            </div>
+            <div>
+                <span class="text-2xl font-black text-indigo-600">{{ stats.admit_cards }}</span>
+                <span class="block text-[11px] font-semibold text-slate-400">Admit Cards</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-square-poll-vertical"></i>
+            </div>
+            <div>
+                <span class="text-2xl font-black text-teal-600">{{ stats.results }}</span>
+                <span class="block text-[11px] font-semibold text-slate-400">Results Live</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Listings Table -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-black text-slate-900">All Published Government Exams</h2>
+                <p class="text-xs text-slate-500">Manage, edit dates, and verify official redirect links</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                    {{ exams|length }} Posts Listed
+                </span>
+                <a href="/portal-boss-secure-2026/automation" class="text-xs font-bold text-amber-600 hover:text-amber-700 bg-amber-50 px-3 py-1 rounded-full flex items-center gap-1">
+                    <i class="fa-solid fa-bolt text-[10px]"></i> Scraper Active
+                </a>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="p-4">Exam Details</th>
+                        <th class="p-4">Category</th>
+                        <th class="p-4">Source Type</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4">Last Date</th>
+                        <th class="p-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for exam in exams %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="p-4 max-w-sm">
+                            <a href="/exam/{{ exam.slug }}" target="_blank" class="font-bold text-slate-900 hover:text-blue-600 block line-clamp-1 text-sm">
+                                {{ exam.title }}
+                            </a>
+                            <span class="text-[11px] text-slate-400">
+                                {{ exam.board_name }} • Slug: <code class="text-[10px] bg-slate-100 px-1 py-0.5 rounded">{{ exam.slug }}</code>
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                                {{ exam.category }}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            {% if exam.is_auto_synced %}
+                            <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold flex items-center gap-1 w-max">
+                                <i class="fa-solid fa-robot text-[9px]"></i> Auto-Synced
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+                                Manual Post
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4">
+                            {% if 'Open' in exam.status or 'Active' in exam.status %}
+                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                                {{ exam.status }}
+                            </span>
+                            {% elif 'Admit' in exam.status %}
+                            <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">
+                                {{ exam.status }}
+                            </span>
+                            {% elif 'Result' in exam.status %}
+                            <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                {{ exam.status }}
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                                {{ exam.status }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 font-bold text-rose-600">
+                            {{ exam.apply_last_date if exam.apply_last_date else '-' }}
+                        </td>
+                        <td class="p-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="/exam/{{ exam.slug }}" target="_blank" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition" title="View Public Page">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                                <a href="/portal-boss-secure-2026/exams/edit/{{ exam.id }}" class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition font-bold" title="Edit Exam">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <form action="/portal-boss-secure-2026/exams/delete/{{ exam.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this exam post?');" class="inline">
+                                    <button type="submit" class="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition" title="Delete Exam">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Bottom Logout & Navigation Bar -->
+    <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+            <i class="fa-solid fa-user-shield text-slate-400"></i>
+            <span>लॉगिन यूजर: <strong>durgalalsaini7757@gmail.com</strong></span>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/" target="_blank" class="text-xs font-bold text-slate-600 hover:text-blue-600 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition">
+                मुख्य वेबसाइट देखें ↗
+            </a>
+            <a href="/portal-boss-secure-2026/logout" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>लॉगआउट (Logout)</span>
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

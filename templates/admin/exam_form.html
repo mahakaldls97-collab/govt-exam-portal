@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Exam: ' ~ exam.title if exam else 'Add New Exam Post - Admin' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Top Breadcrumb & Heading -->
+    <div class="flex items-center justify-between">
+        <div>
+            <a href="/portal-boss-secure-2026" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left"></i> Back to Admin Dashboard
+            </a>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
+                {{ 'Edit Exam: ' ~ exam.title if exam else 'Add New Government Exam Post' }}
+            </h1>
+        </div>
+        <div>
+            <a href="/portal-boss-secure-2026/logout" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 border border-rose-500" title="Admin Logout">
+                <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                <span>लॉगआउट (Logout)</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <form action="{{ '/portal-boss-secure-2026/exams/edit/' ~ exam.id if exam else '/portal-boss-secure-2026/exams/new' }}" method="POST" class="space-y-6">
+        
+        <!-- SECTION 1: Basic Information -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-solid fa-circle-info text-blue-600"></i>
+                1. Basic Exam Details (मूल विवरण)
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Exam Title *</label>
+                    <input 
+                        type="text" 
+                        name="title" 
+                        id="exam_title"
+                        value="{{ exam.title if exam else '' }}" 
+                        placeholder="e.g. CTET 2026 Notification - Central Teacher Eligibility Test" 
+                        required 
+                        class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">URL Slug * (Google Search URL)</label>
+                    <div class="flex items-center">
+                        <span class="bg-slate-100 border border-r-0 border-slate-300 px-3 py-2.5 rounded-l-xl text-xs text-slate-500">/exam/</span>
+                        <input 
+                            type="text" 
+                            name="slug" 
+                            id="exam_slug"
+                            value="{{ exam.slug if exam else '' }}" 
+                            placeholder="ctet-2026" 
+                            required 
+                            class="w-full bg-slate-50 border border-slate-300 rounded-r-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        >
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Category *</label>
+                    <select name="category" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Teaching" {% if exam and exam.category == 'Teaching' %}selected{% endif %}>Teaching (CTET, REET, KVS)</option>
+                        <option value="SSC" {% if exam and exam.category == 'SSC' %}selected{% endif %}>SSC (CGL, CHSL, GD, MTS)</option>
+                        <option value="UPSC" {% if exam and exam.category == 'UPSC' %}selected{% endif %}>UPSC (IAS, IPS, NDA, CDS)</option>
+                        <option value="Railway" {% if exam and exam.category == 'Railway' %}selected{% endif %}>Railway (RRB NTPC, Group D)</option>
+                        <option value="Banking" {% if exam and exam.category == 'Banking' %}selected{% endif %}>Banking (IBPS, SBI, RBI)</option>
+                        <option value="Police" {% if exam and exam.category == 'Police' %}selected{% endif %}>Police & Defense</option>
+                        <option value="State" {% if exam and exam.category == 'State' %}selected{% endif %}>State PSC & Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Board / Organization Name *</label>
+                    <input 
+                        type="text" 
+                        name="board_name" 
+                        value="{{ exam.board_name if exam else '' }}" 
+                        placeholder="e.g. CBSE, SSC, UPSC, Railway Recruitment Board" 
+                        required 
+                        class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Total Vacancies / Posts</label>
+                    <input 
+                        type="text" 
+                        name="total_vacancies" 
+                        value="{{ exam.total_vacancies if exam else 'Various Posts' }}" 
+                        placeholder="e.g. 14,000+ Posts or National Eligibility" 
+                        class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Status Badge *</label>
+                    <select name="status" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Applications Open" {% if exam and exam.status == 'Applications Open' %}selected{% endif %}>Applications Open (फॉर्म चालू है)</option>
+                        <option value="Admit Card Released" {% if exam and exam.status == 'Admit Card Released' %}selected{% endif %}>Admit Card Released (प्रवेश पत्र जारी)</option>
+                        <option value="Answer Key Released" {% if exam and exam.status == 'Answer Key Released' %}selected{% endif %}>Answer Key Released (उत्तर कुंजी जारी)</option>
+                        <option value="Result Declared" {% if exam and exam.status == 'Result Declared' %}selected{% endif %}>Result Declared (परिणाम घोषित)</option>
+                        <option value="Upcoming Notification" {% if exam and exam.status == 'Upcoming Notification' %}selected{% endif %}>Upcoming Notification (आगामी भर्ती)</option>
+                        <option value="Application Closed" {% if exam and exam.status == 'Application Closed' %}selected{% endif %}>Application Closed (आवेदन समाप्त)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Feature on Homepage</label>
+                    <div class="pt-2">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                            <input type="checkbox" name="is_featured" value="1" {% if exam and exam.is_featured %}checked{% endif %} class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500">
+                            <span>Pin to Featured Cards section</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Short Description *</label>
+                    <textarea 
+                        name="short_description" 
+                        rows="3" 
+                        required 
+                        placeholder="Brief summary for search engines and candidate overview..."
+                        class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >{{ exam.short_description if exam else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: Important Dates -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-regular fa-calendar-days text-emerald-600"></i>
+                2. Important Dates (महत्वपूर्ण तिथियां)
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Notification Date</label>
+                    <input type="text" name="notification_date" value="{{ exam.notification_date if exam else '' }}" placeholder="01 Feb 2026" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Apply Start Date</label>
+                    <input type="text" name="apply_start_date" value="{{ exam.apply_start_date if exam else '' }}" placeholder="05 Feb 2026" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-rose-600 mb-1">Last Date to Apply *</label>
+                    <input type="text" name="apply_last_date" value="{{ exam.apply_last_date if exam else '' }}" placeholder="28 Feb 2026 (11:59 PM)" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 font-bold">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Fee Payment Last Date</label>
+                    <input type="text" name="fee_last_date" value="{{ exam.fee_last_date if exam else '' }}" placeholder="28 Feb 2026" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Correction Window</label>
+                    <input type="text" name="correction_last_date" value="{{ exam.correction_last_date if exam else '' }}" placeholder="02 to 08 March 2026" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-blue-600 mb-1">Exam Date</label>
+                    <input type="text" name="exam_date" value="{{ exam.exam_date if exam else '' }}" placeholder="12 July 2026" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 font-bold">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Admit Card Date</label>
+                    <input type="text" name="admit_card_date" value="{{ exam.admit_card_date if exam else '' }}" placeholder="2 Days Before Exam" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Result Date</label>
+                    <input type="text" name="result_date" value="{{ exam.result_date if exam else '' }}" placeholder="August 2026" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Fees & Age Limits -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-solid fa-indian-rupee-sign text-emerald-600"></i>
+                3. Application Fees & Age Limit (शुल्क व आयु सीमा)
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">General / OBC / EWS Fee</label>
+                    <input type="text" name="fee_general" value="{{ exam.fee_general if exam else '' }}" placeholder="₹100 or ₹1000" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">SC / ST / PwD Fee</label>
+                    <input type="text" name="fee_reserved" value="{{ exam.fee_reserved if exam else '' }}" placeholder="₹0 or ₹500" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Payment Mode</label>
+                    <input type="text" name="fee_payment_mode" value="{{ exam.fee_payment_mode if exam else 'Online (Debit/Credit Card, Net Banking, UPI)' }}" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Minimum Age</label>
+                    <input type="text" name="min_age" value="{{ exam.min_age if exam else '18 Years' }}" placeholder="18 Years" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Maximum Age</label>
+                    <input type="text" name="max_age" value="{{ exam.max_age if exam else '' }}" placeholder="27 Years / No Upper Limit" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Age As On Date</label>
+                    <input type="text" name="age_as_on" value="{{ exam.age_as_on if exam else '' }}" placeholder="01-08-2026" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="sm:col-span-3">
+                    <label class="block font-bold text-slate-700 mb-1">Age Relaxation Details</label>
+                    <input type="text" name="age_relaxation" value="{{ exam.age_relaxation if exam else 'OBC: 3 Years | SC/ST: 5 Years' }}" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: DIRECT OFFICIAL BUTTONS / LINKS -->
+        <div class="bg-gradient-to-r from-blue-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-4">
+            <div class="border-b border-blue-800/80 pb-3">
+                <h2 class="text-lg font-black text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-link"></i>
+                    4. Official Action Buttons & Redirect Links (आधिकारिक लिंक)
+                </h2>
+                <p class="text-xs text-blue-200 mt-1">
+                    इन लिंक्स पर क्लिक करके यूजर सीधे संबंधित आधिकारिक सरकारी वेबसाइट पर रीडायरेक्ट होगा।
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                    <label class="block font-bold text-white mb-1">
+                        <i class="fa-solid fa-file-pen text-emerald-400 mr-1"></i> Apply Online URL (आधिकारिक फॉर्म लिंक) *
+                    </label>
+                    <input type="url" name="link_apply_online" value="{{ exam.link_apply_online if exam else '' }}" placeholder="https://ctet.nic.in/ or https://ssc.gov.in/" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-white mb-1">
+                        <i class="fa-solid fa-file-pdf text-rose-400 mr-1"></i> Notification PDF URL (विज्ञप्ति लिंक) *
+                    </label>
+                    <input type="url" name="link_notification_pdf" value="{{ exam.link_notification_pdf if exam else '' }}" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-white mb-1">
+                        <i class="fa-solid fa-ticket text-purple-400 mr-1"></i> Admit Card URL (प्रवेश पत्र लिंक)
+                    </label>
+                    <input type="url" name="link_admit_card" value="{{ exam.link_admit_card if exam else '' }}" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-white mb-1">
+                        <i class="fa-solid fa-square-poll-vertical text-amber-400 mr-1"></i> Result URL (रिजल्ट / मेरिट लिस्ट लिंक)
+                    </label>
+                    <input type="url" name="link_result" value="{{ exam.link_result if exam else '' }}" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-white mb-1">
+                        <i class="fa-solid fa-key text-yellow-400 mr-1"></i> Answer Key URL (उत्तर कुंजी)
+                    </label>
+                    <input type="url" name="link_answer_key" value="{{ exam.link_answer_key if exam else '' }}" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-white mb-1">
+                        <i class="fa-solid fa-globe text-sky-400 mr-1"></i> Official Portal Website URL *
+                    </label>
+                    <input type="url" name="link_official_website" value="{{ exam.link_official_website if exam else '' }}" placeholder="https://ctet.nic.in" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-white mb-1">
+                        <i class="fa-solid fa-book-open text-pink-400 mr-1"></i> Previous Year Papers / Syllabus Link
+                    </label>
+                    <input type="url" name="link_previous_papers" value="{{ exam.link_previous_papers if exam else '' }}" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: Eligibility, Selection Process & Syllabus -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-solid fa-graduation-cap text-blue-600"></i>
+                5. Eligibility, Selection Process & Syllabus (पात्रता व पाठ्यक्रम)
+            </h2>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Eligibility Criteria (शैक्षणिक योग्यता)</label>
+                    <textarea name="eligibility_criteria" rows="4" placeholder="Points or qualifications e.g. 12th pass with D.El.Ed / B.Ed / Graduation..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-blue-500">{{ exam.eligibility_criteria if exam else '' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Selection Process (चयन प्रक्रिया)</label>
+                    <textarea name="selection_process" rows="3" placeholder="e.g. 1. Written Exam, 2. Skill Test, 3. Document Verification..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-blue-500">{{ exam.selection_process if exam else '' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Syllabus Summary & Exam Pattern</label>
+                    <textarea name="syllabus_summary" rows="4" placeholder="Subjects, marks distribution, negative marking, duration..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-blue-500">{{ exam.syllabus_summary if exam else '' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Step-by-Step How to Apply Guide</label>
+                    <textarea name="how_to_apply" rows="3" placeholder="Steps to register and submit form on official portal..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-blue-500">{{ exam.how_to_apply if exam else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: Google SEO Configuration -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-solid fa-magnifying-glass text-indigo-600"></i>
+                6. Google SEO Optimization (सर्च रैंकिंग सेटिंग्स)
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-700 mb-1">Meta Title (Search result headline)</label>
+                    <input type="text" name="meta_title" value="{{ exam.meta_title if exam else '' }}" placeholder="e.g. CTET 2026 Notification, Exam Date, Eligibility & Apply Online" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 font-medium">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-700 mb-1">Meta Description (Snippet under title on Google)</label>
+                    <textarea name="meta_description" rows="2" placeholder="150-160 characters describing the exam dates and official apply link..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">{{ exam.meta_description if exam else '' }}</textarea>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-700 mb-1">Target Keywords (Comma separated)</label>
+                    <input type="text" name="keywords" value="{{ exam.keywords if exam else '' }}" placeholder="CTET 2026, ctet apply online, ctet nic in, ctet admit card" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex items-center justify-end gap-3 pt-2">
+            <a href="/portal-boss-secure-2026" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-6 py-3 rounded-2xl text-xs transition">
+                Cancel
+            </a>
+            <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black px-8 py-3.5 rounded-2xl text-sm transition shadow-lg flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                <span>{{ 'Update & Publish Immediately' if exam else 'Create Exam Post & Publish' }}</span>
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    // Auto-generate slug from title if new post
+    const titleInput = document.getElementById('exam_title');
+    const slugInput = document.getElementById('exam_slug');
+    if (titleInput && slugInput && !slugInput.value) {
+        titleInput.addEventListener('input', function() {
+            const slug = this.value
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-');
+            slugInput.value = slug;
+        });
+    }
+</script>
+{% endblock %}
