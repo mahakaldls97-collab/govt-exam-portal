@@ -171,6 +171,11 @@ async def terms_page(request: Request):
 async def google_verification():
     return Response(content="google-site-verification: google5d3c641d428c5323.html", media_type="text/html")
 
+@app.get("/ads.txt", response_class=Response)
+async def ads_txt():
+    content = "google.com, pub-3194593974955223, DIRECT, f08c47fec0942fa0\n"
+    return Response(content=content, media_type="text/plain")
+
 @app.get("/robots.txt", response_class=Response)
 async def robots_txt(request: Request):
     base_url = str(request.base_url).rstrip('/')
@@ -184,6 +189,7 @@ Allow: /privacy-policy
 Allow: /about-us
 Allow: /contact-us
 Allow: /terms
+Allow: /ads.txt
 Disallow: /portal-boss-secure-2026/
 Disallow: /admin
 
