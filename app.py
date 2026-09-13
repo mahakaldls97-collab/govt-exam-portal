@@ -133,6 +133,38 @@ async def disclaimer_page(request: Request):
         context={}
     )
 
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="privacy_policy.html",
+        context={}
+    )
+
+@app.get("/about-us", response_class=HTMLResponse)
+async def about_us_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="about_us.html",
+        context={}
+    )
+
+@app.get("/contact-us", response_class=HTMLResponse)
+async def contact_us_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="contact_us.html",
+        context={}
+    )
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="terms.html",
+        context={}
+    )
+
 # ----------------- GOOGLE SEARCH & SEO (ROBOTS & SITEMAP) ----------------- #
 
 @app.get("/google5d3c641d428c5323.html", response_class=Response)
@@ -148,6 +180,10 @@ Allow: /exam/
 Allow: /category/
 Allow: /search
 Allow: /disclaimer
+Allow: /privacy-policy
+Allow: /about-us
+Allow: /contact-us
+Allow: /terms
 Disallow: /portal-boss-secure-2026/
 Disallow: /admin
 
@@ -165,6 +201,10 @@ async def sitemap_xml(request: Request):
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
         f'  <url><loc>{base_url}/</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>',
+        f'  <url><loc>{base_url}/privacy-policy</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+        f'  <url><loc>{base_url}/about-us</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+        f'  <url><loc>{base_url}/contact-us</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+        f'  <url><loc>{base_url}/terms</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
         f'  <url><loc>{base_url}/disclaimer</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>'
     ]
     for cat in categories:
