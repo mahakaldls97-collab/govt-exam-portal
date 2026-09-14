@@ -155,9 +155,9 @@ def get_all_exams(limit=100, category=None, search=None, status=None, state=None
     query = "SELECT * FROM exams WHERE 1=1"
     params = []
     
-    # Hide expired vacancies from public view by default
+    # Hide archived/expired vacancies from public view by default
     if hide_expired:
-        query += " AND status != 'Expired'"
+        query += " AND status NOT IN ('Archived', 'Expired')"
     
     if category and category.lower() != 'all':
         query += " AND LOWER(category) = LOWER(?)"
@@ -391,62 +391,110 @@ def get_stats():
 
 def auto_cleanup_expired_exams():
     """
-    Automatically marks old vacancies as 'Expired' if:
-    1. apply_last_date has passed (and is a real date, not 'Check Official Portal')
-    2. The exam was created more than 90 days ago and still says 'Applications Open'
-    Returns count of cleaned up exams.
+    Intelligent 3-Stage Recruitment Lifecycle Management:
+    Stage 1: 'Applications Open' -> While apply_last_date is active.
+    Stage 2: When apply_last_date has passed -> Moves to 'Admit Card / Exam' (badge: 'blue')
+             so candidates can still access Admit Card and Exam details!
+    Stage 3: When exam_date has passed -> Moves to 'Result / Answer Key' (badge: 'amber').
+    Stage 4: When recruitment is completely over (> 60 days after result OR > 180 days old) ->
+             Status becomes 'Archived' (hidden from active listings).
     """
-    import re
     conn = get_db()
     cursor = conn.cursor()
-    cleaned = 0
     now = datetime.now()
+    moved_to_admit = 0
+    moved_to_result = 0
+    archived = 0
     
-    # Get all exams that are still 'Applications Open' or 'Upcoming'
+    # 1. First, revive any mistakenly 'Expired' exams back to 'Admit Card / Exam'
     cursor.execute("""
-        SELECT id, title, apply_last_date, created_at, status 
+        UPDATE exams SET status = 'Admit Card / Exam', badge_color = 'blue'
+        WHERE status = 'Expired'
+    """)
+    if cursor.rowcount > 0:
+        moved_to_admit += cursor.rowcount
+        print(f"  [LIFECYCLE] Re-activated {cursor.rowcount} exams to 'Admit Card / Exam' stage.")
+
+    # 2. Check all active exams
+    cursor.execute("""
+        SELECT id, title, apply_last_date, exam_date, result_date, created_at, status 
         FROM exams 
-        WHERE status LIKE '%Open%' OR status LIKE '%Active%' OR status LIKE '%Upcoming%'
+        WHERE status NOT IN ('Archived')
     """)
     rows = cursor.fetchall()
     
     for row in rows:
         exam = dict(row)
-        should_expire = False
-        
-        # Method 1: Check if apply_last_date has a real date that has passed
+        curr_status = exam.get('status', '')
         last_date_str = exam.get('apply_last_date', '') or ''
-        if last_date_str and last_date_str not in ['Check Official Portal', 'As per official notification', '', 'Various', 'N/A']:
-            # Try to parse common date formats
+        exam_date_str = exam.get('exam_date', '') or ''
+        result_date_str = exam.get('result_date', '') or ''
+        created_str = str(exam.get('created_at', ''))[:19]
+        
+        apply_passed = False
+        exam_passed = False
+        result_passed = False
+        days_since_result = 0
+        
+        # Helper to parse dates
+        def parse_date(d_str):
+            if not d_str or d_str in ['Check Official Portal', 'As per official notification', 'Various', 'N/A', '']:
+                return None
             for fmt in ['%d %B %Y', '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%d %b %Y']:
                 try:
-                    last_date = datetime.strptime(last_date_str.strip(), fmt)
-                    if last_date < now:
-                        should_expire = True
-                    break
+                    return datetime.strptime(d_str.strip(), fmt)
                 except ValueError:
                     continue
+            return None
+            
+        last_dt = parse_date(last_date_str)
+        exam_dt = parse_date(exam_date_str)
+        result_dt = parse_date(result_date_str)
         
-        # Method 2: If created more than 90 days ago and no real date available
-        if not should_expire:
-            created_str = exam.get('created_at', '')
-            if created_str:
-                try:
-                    created_date = datetime.strptime(str(created_str)[:19], '%Y-%m-%d %H:%M:%S')
-                    days_old = (now - created_date).days
-                    if days_old > 90:
-                        should_expire = True
-                except Exception:
-                    pass
-        
-        if should_expire:
-            cursor.execute("""
-                UPDATE exams SET status = 'Expired', badge_color = 'gray', updated_at = ? 
-                WHERE id = ?
-            """, (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
-            cleaned += 1
-            print(f"  [CLEANUP] Marked as Expired: {exam['title']}")
+        if last_dt and last_dt < now:
+            apply_passed = True
+        if exam_dt and exam_dt < now:
+            exam_passed = True
+        if result_dt and result_dt < now:
+            result_passed = True
+            days_since_result = (now - result_dt).days
+            
+        days_old = 0
+        if created_str:
+            try:
+                created_dt = datetime.strptime(created_str, '%Y-%m-%d %H:%M:%S')
+                days_old = (now - created_dt).days
+            except Exception:
+                pass
+
+        # Stage 4: Archive if result declared > 60 days ago OR created > 180 days ago with apply_passed
+        if (result_passed and days_since_result > 60) or (apply_passed and days_old > 180):
+            if curr_status != 'Archived':
+                cursor.execute("UPDATE exams SET status = 'Archived', badge_color = 'gray', updated_at = ? WHERE id = ?",
+                               (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
+                archived += 1
+                print(f"  [LIFECYCLE -> ARCHIVED] {exam['title']}")
+                continue
+                
+        # Stage 3: Result / Answer Key (if exam has already taken place)
+        if exam_passed and curr_status not in ['Result Declared', 'Result / Answer Key', 'Archived']:
+            cursor.execute("UPDATE exams SET status = 'Result / Answer Key', badge_color = 'amber', updated_at = ? WHERE id = ?",
+                           (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
+            moved_to_result += 1
+            print(f"  [LIFECYCLE -> RESULT] {exam['title']}")
+            continue
+            
+        # Stage 2: Form closed -> Move to 'Admit Card / Exam' (so applicants can download admit cards)
+        if apply_passed and curr_status in ['Applications Open', 'Upcoming Notification', 'Upcoming']:
+            cursor.execute("UPDATE exams SET status = 'Admit Card / Exam', badge_color = 'blue', updated_at = ? WHERE id = ?",
+                           (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
+            moved_to_admit += 1
+            print(f"  [LIFECYCLE -> ADMIT CARD / EXAM] {exam['title']}")
     
     conn.commit()
     conn.close()
-    return cleaned
+    return {
+        'moved_to_admit': moved_to_admit,
+        'moved_to_result': moved_to_result,
+        'archived': archived
+    }

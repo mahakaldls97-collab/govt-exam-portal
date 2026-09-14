@@ -39,11 +39,10 @@ async def background_vacancy_crawler():
             fetch_and_sync_vacancies()
         except Exception as e:
             print(f"[BACKGROUND WORKER ERROR] Auto-sync encountered an error: {e}")
-        # Auto-cleanup expired vacancies
+        # Auto-cleanup expired vacancies (3-stage lifecycle)
         try:
-            cleaned = auto_cleanup_expired_exams()
-            if cleaned > 0:
-                print(f"[AUTO-CLEANUP] {cleaned} expired vacancies marked as 'Expired' and hidden from public view.")
+            res = auto_cleanup_expired_exams()
+            print(f"[AUTO-LIFECYCLE] Moved to Admit Card: {res.get('moved_to_admit', 0)}, Moved to Result: {res.get('moved_to_result', 0)}, Archived: {res.get('archived', 0)}")
         except Exception as e:
             print(f"[CLEANUP ERROR] {e}")
         # Run every 1 hour (3600 seconds)
@@ -61,9 +60,8 @@ def on_startup():
         print(f"Startup initial sync notice: {e}")
     # Run initial cleanup
     try:
-        cleaned = auto_cleanup_expired_exams()
-        if cleaned > 0:
-            print(f"[STARTUP CLEANUP] {cleaned} expired vacancies cleaned up.")
+        res = auto_cleanup_expired_exams()
+        print(f"[STARTUP LIFECYCLE] Moved to Admit Card: {res.get('moved_to_admit', 0)}, Moved to Result: {res.get('moved_to_result', 0)}, Archived: {res.get('archived', 0)}")
     except Exception as e:
         print(f"Startup cleanup notice: {e}")
     asyncio.create_task(background_vacancy_crawler())
@@ -82,7 +80,7 @@ async def home_page(request: Request):
     # Only active, ongoing, and upcoming exams (no finished/result exams)
     active_forms_exams = get_all_exams(limit=50, status="Applications Open")
     upcoming_exams = get_all_exams(limit=50, status="Upcoming")
-    admit_cards_exams = get_all_exams(limit=50, status="Admit Card")
+    admit_cards_exams = get_all_exams(limit=50, status="Admit")
     police_exams = get_all_exams(limit=50, category="Police")
     all_active_exams = get_all_exams(limit=100)
     all_states = get_all_states()
