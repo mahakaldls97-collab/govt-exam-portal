@@ -149,11 +149,15 @@ def exam_exists(slug=None, title=None, source_url=None):
     conn.close()
     return False
 
-def get_all_exams(limit=100, category=None, search=None, status=None, state=None, featured_only=False):
+def get_all_exams(limit=100, category=None, search=None, status=None, state=None, featured_only=False, hide_expired=True):
     conn = get_db()
     cursor = conn.cursor()
     query = "SELECT * FROM exams WHERE 1=1"
     params = []
+    
+    # Hide expired vacancies from public view by default
+    if hide_expired:
+        query += " AND status != 'Expired'"
     
     if category and category.lower() != 'all':
         query += " AND LOWER(category) = LOWER(?)"
@@ -384,3 +388,65 @@ def get_stats():
         'last_sync_time': last_sync_time,
         'categories': categories
     }
+
+def auto_cleanup_expired_exams():
+    """
+    Automatically marks old vacancies as 'Expired' if:
+    1. apply_last_date has passed (and is a real date, not 'Check Official Portal')
+    2. The exam was created more than 90 days ago and still says 'Applications Open'
+    Returns count of cleaned up exams.
+    """
+    import re
+    conn = get_db()
+    cursor = conn.cursor()
+    cleaned = 0
+    now = datetime.now()
+    
+    # Get all exams that are still 'Applications Open' or 'Upcoming'
+    cursor.execute("""
+        SELECT id, title, apply_last_date, created_at, status 
+        FROM exams 
+        WHERE status LIKE '%Open%' OR status LIKE '%Active%' OR status LIKE '%Upcoming%'
+    """)
+    rows = cursor.fetchall()
+    
+    for row in rows:
+        exam = dict(row)
+        should_expire = False
+        
+        # Method 1: Check if apply_last_date has a real date that has passed
+        last_date_str = exam.get('apply_last_date', '') or ''
+        if last_date_str and last_date_str not in ['Check Official Portal', 'As per official notification', '', 'Various', 'N/A']:
+            # Try to parse common date formats
+            for fmt in ['%d %B %Y', '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%d %b %Y']:
+                try:
+                    last_date = datetime.strptime(last_date_str.strip(), fmt)
+                    if last_date < now:
+                        should_expire = True
+                    break
+                except ValueError:
+                    continue
+        
+        # Method 2: If created more than 90 days ago and no real date available
+        if not should_expire:
+            created_str = exam.get('created_at', '')
+            if created_str:
+                try:
+                    created_date = datetime.strptime(str(created_str)[:19], '%Y-%m-%d %H:%M:%S')
+                    days_old = (now - created_date).days
+                    if days_old > 90:
+                        should_expire = True
+                except Exception:
+                    pass
+        
+        if should_expire:
+            cursor.execute("""
+                UPDATE exams SET status = 'Expired', badge_color = 'gray', updated_at = ? 
+                WHERE id = ?
+            """, (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
+            cleaned += 1
+            print(f"  [CLEANUP] Marked as Expired: {exam['title']}")
+    
+    conn.commit()
+    conn.close()
+    return cleaned

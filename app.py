@@ -7,7 +7,8 @@ import asyncio
 
 from database import (
     init_db, get_all_exams, get_exam_by_slug, get_exam_by_id,
-    create_exam, update_exam, delete_exam, get_stats, get_sync_logs, get_all_states
+    create_exam, update_exam, delete_exam, get_stats, get_sync_logs, get_all_states,
+    auto_cleanup_expired_exams
 )
 from auth import (
     init_admin, verify_admin, create_session, is_valid_session, invalidate_session, reset_admin_password,
@@ -29,7 +30,7 @@ app = FastAPI(title="Govt Exam Information Portal", version="1.1.0")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-# Background worker that automatically polls government sources periodically
+# Background worker that automatically polls government sources and cleans expired vacancies
 async def background_vacancy_crawler():
     # Wait 10 seconds after server starts before first auto-sync
     await asyncio.sleep(10)
@@ -38,6 +39,13 @@ async def background_vacancy_crawler():
             fetch_and_sync_vacancies()
         except Exception as e:
             print(f"[BACKGROUND WORKER ERROR] Auto-sync encountered an error: {e}")
+        # Auto-cleanup expired vacancies
+        try:
+            cleaned = auto_cleanup_expired_exams()
+            if cleaned > 0:
+                print(f"[AUTO-CLEANUP] {cleaned} expired vacancies marked as 'Expired' and hidden from public view.")
+        except Exception as e:
+            print(f"[CLEANUP ERROR] {e}")
         # Run every 1 hour (3600 seconds)
         await asyncio.sleep(3600)
 
@@ -51,6 +59,13 @@ def on_startup():
         fetch_and_sync_vacancies()
     except Exception as e:
         print(f"Startup initial sync notice: {e}")
+    # Run initial cleanup
+    try:
+        cleaned = auto_cleanup_expired_exams()
+        if cleaned > 0:
+            print(f"[STARTUP CLEANUP] {cleaned} expired vacancies cleaned up.")
+    except Exception as e:
+        print(f"Startup cleanup notice: {e}")
     asyncio.create_task(background_vacancy_crawler())
 
 # Helper to check admin session
