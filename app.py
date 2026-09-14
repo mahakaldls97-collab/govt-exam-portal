@@ -17,6 +17,7 @@ from auth import (
 from email_service import send_password_reset_email
 from seed_data import seed
 from auto_scraper import fetch_and_sync_vacancies
+from sarkariexam_scraper import fetch_and_sync_sarkariexam
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -39,6 +40,10 @@ async def background_vacancy_crawler():
             fetch_and_sync_vacancies()
         except Exception as e:
             print(f"[BACKGROUND WORKER ERROR] Auto-sync encountered an error: {e}")
+        try:
+            fetch_and_sync_sarkariexam()
+        except Exception as e:
+            print(f"[SARKARIEXAM CRAWLER ERROR] {e}")
         # Auto-cleanup expired vacancies (3-stage lifecycle)
         try:
             res = auto_cleanup_expired_exams()
@@ -58,6 +63,10 @@ def on_startup():
         fetch_and_sync_vacancies()
     except Exception as e:
         print(f"Startup initial sync notice: {e}")
+    try:
+        fetch_and_sync_sarkariexam()
+    except Exception as e:
+        print(f"Startup sarkariexam sync notice: {e}")
     # Run initial cleanup
     try:
         res = auto_cleanup_expired_exams()
