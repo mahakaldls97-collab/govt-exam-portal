@@ -440,9 +440,15 @@ def auto_cleanup_expired_exams():
         def parse_date(d_str):
             if not d_str or d_str in ['Check Official Portal', 'As per official notification', 'Various', 'N/A', '']:
                 return None
-            for fmt in ['%d %B %Y', '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%d %b %Y']:
+            import re
+            cleaned = re.sub(r'\(.*?\)', '', str(d_str)).strip()
+            # Handle multiple dates like '23, 24, 25 & 26 October 2026' -> '26 October 2026'
+            m = re.search(r'(\d{1,2}\s+[A-Za-z]+\s+\d{4})', cleaned)
+            if m:
+                cleaned = m.group(1)
+            for fmt in ['%d %B %Y', '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%d %b %Y', '%B %Y', '%b %Y']:
                 try:
-                    return datetime.strptime(d_str.strip(), fmt)
+                    return datetime.strptime(cleaned.strip(), fmt)
                 except ValueError:
                     continue
             return None

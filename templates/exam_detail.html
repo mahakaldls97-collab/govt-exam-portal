@@ -151,6 +151,7 @@
             
             <!-- Apply Online Button -->
             {% if exam.link_apply_online %}
+            {% if 'Open' in exam.status or 'Active' in exam.status %}
             <a href="{{ exam.link_apply_online }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black text-sm p-4 rounded-2xl shadow-lg shadow-emerald-900/30 flex items-center justify-between group transition transform active:scale-98">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
@@ -163,6 +164,21 @@
                 </div>
                 <i class="fa-solid fa-arrow-up-right-from-square text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
             </a>
+            {% else %}
+            <!-- Application Closed State -->
+            <div class="bg-slate-100 border border-slate-200 text-slate-500 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-700 leading-tight">Application Closed</span>
+                        <span class="text-[11px] font-semibold text-rose-600">आवेदन समाप्त (लास्ट डेट निकल चुकी है)</span>
+                    </div>
+                </div>
+                <span class="text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg">Closed</span>
+            </div>
+            {% endif %}
             {% endif %}
 
             <!-- Official Notification PDF -->
@@ -199,6 +215,7 @@
 
             <!-- Answer Key Button -->
             {% if exam.link_answer_key %}
+            {% if 'Answer' in exam.status or 'Result' in exam.status %}
             <a href="{{ exam.link_answer_key }}" target="_blank" rel="nofollow noopener" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm p-4 rounded-2xl shadow flex items-center justify-between group transition">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg text-amber-400">
@@ -211,10 +228,25 @@
                 </div>
                 <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
             </a>
+            {% else %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-400 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-400">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-600 leading-tight">Answer Key</span>
+                        <span class="text-[11px] text-slate-400">परीक्षा संपन्न होने के बाद जारी होगी</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Upcoming</span>
+            </div>
+            {% endif %}
             {% endif %}
 
             <!-- Result Button -->
             {% if exam.link_result %}
+            {% if 'Result' in exam.status %}
             <a href="{{ exam.link_result }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-sm p-4 rounded-2xl shadow-lg shadow-orange-900/30 flex items-center justify-between group transition transform active:scale-98">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
@@ -222,11 +254,25 @@
                     </div>
                     <div class="text-left">
                         <span class="block leading-tight">Check Result / Score</span>
-                        <span class="text-[11px] font-normal text-amber-100">रिजल्ट / मेरिट लिस्ट</span>
+                        <span class="text-[11px] font-normal text-amber-100">रिजल्ट / मेरिट लिस्ट जारी</span>
                     </div>
                 </div>
                 <i class="fa-solid fa-arrow-up-right-from-square text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
             </a>
+            {% else %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-400 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-400">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-600 leading-tight">Result / Score</span>
+                        <span class="text-[11px] text-slate-400">परीक्षा होने के बाद जारी होगा</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Awaited</span>
+            </div>
+            {% endif %}
             {% endif %}
 
             <!-- Official Website Button -->
