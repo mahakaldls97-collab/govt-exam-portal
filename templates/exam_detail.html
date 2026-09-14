@@ -164,6 +164,20 @@
                 </div>
                 <i class="fa-solid fa-arrow-up-right-from-square text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
             </a>
+            {% elif 'Upcoming' in exam.status %}
+            <!-- Upcoming / Coming Soon State -->
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-amber-900 leading-tight">Registration Coming Soon</span>
+                        <span class="text-[11px] font-medium text-amber-700">आवेदन शीघ्र शुरू होगा (विज्ञप्ति प्रतीक्षित)</span>
+                    </div>
+                </div>
+                <span class="text-[11px] font-bold bg-amber-200/70 text-amber-900 px-2.5 py-1 rounded-lg">Upcoming</span>
+            </div>
             {% else %}
             <!-- Application Closed State -->
             <div class="bg-slate-100 border border-slate-200 text-slate-500 p-4 rounded-2xl flex items-center justify-between">
@@ -183,6 +197,20 @@
 
             <!-- Official Notification PDF -->
             {% if exam.link_notification_pdf %}
+            {% if 'Upcoming' in exam.status %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-500 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-700 leading-tight">Official Notification</span>
+                        <span class="text-[11px] text-slate-400">विज्ञप्ति शीघ्र जारी होगी (Coming Soon)</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Awaited</span>
+            </div>
+            {% else %}
             <a href="{{ exam.link_notification_pdf }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm p-4 rounded-2xl shadow-lg shadow-blue-900/30 flex items-center justify-between group transition transform active:scale-98">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
@@ -196,9 +224,11 @@
                 <i class="fa-solid fa-download text-sm group-hover:translate-y-0.5 transition"></i>
             </a>
             {% endif %}
+            {% endif %}
 
             <!-- Admit Card Button -->
             {% if exam.link_admit_card %}
+            {% if 'Admit' in exam.status %}
             <a href="{{ exam.link_admit_card }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-bold text-sm p-4 rounded-2xl shadow-lg shadow-purple-900/30 flex items-center justify-between group transition transform active:scale-98">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
@@ -206,11 +236,25 @@
                     </div>
                     <div class="text-left">
                         <span class="block leading-tight">Download Admit Card</span>
-                        <span class="text-[11px] font-normal text-purple-100">प्रवेश पत्र / एग्जाम सिटी</span>
+                        <span class="text-[11px] font-normal text-purple-100">प्रवेश पत्र / एग्जाम सिटी जारी</span>
                     </div>
                 </div>
                 <i class="fa-solid fa-arrow-up-right-from-square text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
             </a>
+            {% else %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-400 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-400">
+                        <i class="fa-solid fa-ticket"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-600 leading-tight">Admit Card</span>
+                        <span class="text-[11px] text-slate-400">परीक्षा से पूर्व जारी होगा</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Awaited</span>
+            </div>
+            {% endif %}
             {% endif %}
 
             <!-- Answer Key Button -->
