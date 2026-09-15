@@ -354,11 +354,145 @@
         </div>
     </div>
 
+    <!-- Quick Highlights & Total Vacancies Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-emerald-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-users text-emerald-600"></i> कुल पद (Total Vacancies)
+            </span>
+            <span class="text-base sm:text-lg font-black text-emerald-950 block leading-tight">
+                {{ exam.total_vacancies or 'Various Posts' }}
+            </span>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-blue-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-clock text-blue-600"></i> अंतिम तिथि (Last Date)
+            </span>
+            <span class="text-xs sm:text-sm font-black text-blue-950 block leading-tight">
+                {{ exam.apply_last_date or 'Check Official Portal' }}
+            </span>
+        </div>
+
+        <div class="bg-purple-50 border border-purple-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-purple-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-calendar-days text-purple-600"></i> परीक्षा तिथि (Exam Date)
+            </span>
+            <span class="text-xs sm:text-sm font-black text-purple-950 block leading-tight">
+                {{ exam.exam_date if exam.exam_date else 'घोषित होने पर उपलब्ध' }}
+            </span>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-amber-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-user-clock text-amber-600"></i> आयु सीमा (Age Limit)
+            </span>
+            <span class="text-xs sm:text-sm font-black text-amber-950 block leading-tight">
+                {{ exam.min_age or '18' }} से {{ exam.max_age or 'Rules' }}
+            </span>
+        </div>
+    </div>
+
+    <!-- 2-Column Grid: Important Dates & Application Fee -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Important Dates Table -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+                <h2 class="text-base sm:text-lg font-black text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-calendar-check text-emerald-600"></i>
+                    महत्वपूर्ण तिथियां (Important Dates Schedule)
+                </h2>
+                
+                <div class="divide-y divide-slate-100 text-xs sm:text-sm">
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">विज्ञप्ति जारी (Notification Date)</span>
+                        <span class="font-bold text-slate-800">{{ exam.notification_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">ऑनलाइन आवेदन शुरू (Start Date)</span>
+                        <span class="font-bold text-emerald-700">{{ exam.apply_start_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between bg-rose-50/50 -mx-2 px-2 rounded-lg">
+                        <span class="text-rose-900 font-bold">आवेदन की अंतिम तिथि (Last Date)</span>
+                        <span class="font-black text-rose-700">{{ exam.apply_last_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">फीस भुगतान अंतिम तिथि (Fee Last Date)</span>
+                        <span class="font-bold text-slate-800">{{ exam.fee_last_date or exam.apply_last_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">प्रवेश पत्र (Admit Card Date)</span>
+                        <span class="font-bold text-purple-700">{{ exam.admit_card_date or 'परीक्षा से पूर्व जारी होगा' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between bg-blue-50/50 -mx-2 px-2 rounded-lg">
+                        <span class="text-blue-900 font-bold">लिखित परीक्षा तिथि (Exam Date)</span>
+                        <span class="font-black text-blue-700">{{ exam.exam_date if exam.exam_date else 'अधिसूचना अनुसार' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">परिणाम / मेरिट (Result Date)</span>
+                        <span class="font-bold text-slate-800">{{ exam.result_date or 'परीक्षा के बाद घोषित' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Fee & Age Limit Box -->
+        <div class="space-y-6">
+            
+            <!-- Application Fee Box -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                <h2 class="text-base sm:text-lg font-black text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-credit-card text-blue-600"></i>
+                    आवेदन शुल्क विवरण (Application Fee Details)
+                </h2>
+                <div class="space-y-3 text-xs sm:text-sm">
+                    <div class="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600 font-medium">General / OBC / EWS वर्ग</span>
+                        <span class="font-black text-slate-900">{{ exam.fee_general or 'As per notification' }}</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600 font-medium">SC / ST / दिव्यांग / महिला वर्ग</span>
+                        <span class="font-black text-slate-900">{{ exam.fee_reserved or 'As per notification' }}</span>
+                    </div>
+                    <div class="pt-2 text-[11px] text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-blue-500"></i>
+                        <span>भुगतान माध्यम: {{ exam.fee_payment_mode or 'Online (Debit/Credit Card, Net Banking, UPI)' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Age Limit Box -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                <h2 class="text-base sm:text-lg font-black text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-user-clock text-amber-600"></i>
+                    आयु सीमा (Age Limit Guidelines)
+                </h2>
+                <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm mb-3">
+                    <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-100">
+                        <span class="block text-slate-500 text-[11px]">न्यूनतम आयु (Min Age)</span>
+                        <span class="font-black text-amber-900 text-sm sm:text-base">{{ exam.min_age or '18 Years' }}</span>
+                    </div>
+                    <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-100">
+                        <span class="block text-slate-500 text-[11px]">अधिकतम आयु (Max Age)</span>
+                        <span class="font-black text-amber-900 text-sm sm:text-base">{{ exam.max_age or 'As per rules' }}</span>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                    <i class="fa-solid fa-shield-halved text-amber-600 mr-1"></i>
+                    {{ exam.age_relaxation or 'सरकारी नियमानुसार आरक्षित वर्गों (SC/ST/OBC/EWS) को अधिकतम आयु सीमा में नियमानुसार विशेष छूट प्रदान की जाएगी।' }}
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
     <!-- Quick Highlights Table -->
     <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
         <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
             <i class="fa-solid fa-circle-info text-blue-600"></i>
-            परीक्षा संक्षिप्त विवरण (Quick Highlights)
+            संक्षिप्त भर्ती विवरण (Overview)
         </h2>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -376,7 +510,7 @@
             </div>
             <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
                 <span class="block text-slate-400 font-semibold mb-1">नौकरी स्थान (Job Location)</span>
-                <span class="font-bold text-slate-800 text-sm">All India / State</span>
+                <span class="font-bold text-slate-800 text-sm">{{ exam.state or 'All India' }}</span>
             </div>
         </div>
     </div>
