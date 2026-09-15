@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+
+{% block title %}{{ exam.meta_title if exam.meta_title else exam.title ~ ' - Dates, Eligibility, Apply Online' }}{% endblock %}
+
+{% block meta_description %}{{ exam.meta_description if exam.meta_description else exam.short_description[:160] }}{% endblock %}
+
+{% block keywords %}{{ exam.keywords if exam.keywords else exam.title ~ ', eligibility, syllabus, admit card, result, apply online' }}{% endblock %}
+
+{% block canonical_url %}http://localhost:8000/exam/{{ exam.slug }}{% endblock %}
+
+{% block og_title %}{{ exam.title }}{% endblock %}
+{% block og_description %}{{ exam.short_description[:180] }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "GovernmentService",
+  "name": "{{ exam.title }}",
+  "serviceType": "Government Examination Information",
+  "provider": {
+    "@type": "Organization",
+    "name": "{{ exam.board_name }}"
+  },
+  "description": "{{ exam.short_description }}",
+  "url": "http://localhost:8000/exam/{{ exam.slug }}",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Top Back Navigation Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs sm:text-sm border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow transition group">
+            <i class="fa-solid fa-arrow-left text-blue-600 group-hover:-translate-x-1 transition-transform"></i>
+            <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
+        </a>
+        <div class="flex items-center gap-2">
+            <a href="/category/{{ exam.category }}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs transition border border-blue-200">
+                <i class="fa-solid fa-layer-group text-blue-600 text-xs"></i>
+                <span>{{ exam.category }} श्रेणी देखें</span>
+            </a>
+            <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition border border-slate-200 cursor-pointer">
+                <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
+                <span>पिछला पेज (Back)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Breadcrumb Navigation -->
+    <nav class="flex text-xs text-slate-500 font-medium items-center gap-1.5 overflow-x-auto py-1">
+        <a href="/" class="hover:text-blue-600 transition flex items-center gap-1">
+            <i class="fa-solid fa-house text-[10px]"></i> Home
+        </a>
+        <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+        <a href="/category/{{ exam.category }}" class="hover:text-blue-600 transition">
+            {{ exam.category }}
+        </a>
+        <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+        <span class="text-slate-800 font-semibold truncate">{{ exam.title }}</span>
+    </nav>
+
+    <!-- Top Main Header Box -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                    {{ exam.category }} Exam
+                </span>
+                <span class="text-xs font-semibold px-3 py-1 rounded-lg bg-slate-100 text-slate-600">
+                    <i class="fa-regular fa-building"></i> {{ exam.board_name }}
+                </span>
+            </div>
+
+            <!-- Status Pill -->
+            <div>
+                {% if 'Open' in exam.status or 'Active' in exam.status %}
+                <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5 border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    {{ exam.status }}
+                </span>
+                {% elif 'Admit' in exam.status %}
+                <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-blue-100 text-blue-800 flex items-center gap-1.5 border border-blue-200">
+                    <i class="fa-solid fa-ticket"></i> {{ exam.status }}
+                </span>
+                {% elif 'Result' in exam.status %}
+                <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 flex items-center gap-1.5 border border-amber-200">
+                    <i class="fa-solid fa-square-poll-vertical"></i> {{ exam.status }}
+                </span>
+                {% else %}
+                <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                    {{ exam.status }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 leading-tight">
+            {{ exam.title }}
+        </h1>
+
+        <p class="text-sm sm:text-base text-slate-600 mt-3 leading-relaxed">
+            {{ exam.short_description }}
+        </p>
+
+        <!-- Social Share & Quick Stats -->
+        <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+            <div class="flex items-center gap-4">
+                <span><i class="fa-regular fa-calendar-check text-slate-400"></i> Updated: {{ exam.updated_at[:10] }}</span>
+                <span><i class="fa-regular fa-eye text-slate-400"></i> {{ exam.views_count }} Views</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700">Share with Friends:</span>
+                <a href="https://api.whatsapp.com/send?text={{ exam.title }} - Check Notification, Dates & Apply Online Link: http://localhost:8000/exam/{{ exam.slug }}" target="_blank" rel="noopener noreferrer" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                </a>
+                <a href="https://t.me/share/url?url=http://localhost:8000/exam/{{ exam.slug }}&text={{ exam.title }}" target="_blank" rel="noopener noreferrer" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
+                    <i class="fa-brands fa-telegram text-sm"></i> Telegram
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- HIGH-PRIORITY ACTION BUTTONS (DIRECT OFFICIAL GOVERNMENT LINKS) -->
+    <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-blue-800/50">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
+                    <i class="fa-solid fa-link text-amber-400"></i>
+                    सीधे आधिकारिक लिंक (Official Important Links)
+                </h2>
+                <p class="text-xs text-blue-200 mt-0.5">
+                    नीचे दिए गए बटन आपको सीधे आधिकारिक सरकारी वेबसाइट (Official Portal) पर ले जाएंगे।
+                </p>
+            </div>
+            <span class="text-xs bg-amber-400/20 text-amber-300 font-bold px-3 py-1 rounded-full border border-amber-400/30 flex items-center gap-1">
+                <i class="fa-solid fa-circle-check text-xs"></i> 100% Direct Official
+            </span>
+        </div>
+
+        <!-- Action Buttons Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-2">
+            
+            <!-- Apply Online Button -->
+            {% if exam.link_apply_online %}
+            {% if 'Open' in exam.status or 'Active' in exam.status %}
+            <a href="{{ exam.link_apply_online }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black text-sm p-4 rounded-2xl shadow-lg shadow-emerald-900/30 flex items-center justify-between group transition transform active:scale-98">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-pen"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block leading-tight">Apply Online</span>
+                        <span class="text-[11px] font-normal text-emerald-100">आधिकारिक फॉर्म भरें</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
+            </a>
+            {% elif 'Upcoming' in exam.status %}
+            <!-- Upcoming / Coming Soon State -->
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-amber-900 leading-tight">Registration Coming Soon</span>
+                        <span class="text-[11px] font-medium text-amber-700">आवेदन शीघ्र शुरू होगा (विज्ञप्ति प्रतीक्षित)</span>
+                    </div>
+                </div>
+                <span class="text-[11px] font-bold bg-amber-200/70 text-amber-900 px-2.5 py-1 rounded-lg">Upcoming</span>
+            </div>
+            {% else %}
+            <!-- Application Closed State -->
+            <div class="bg-slate-100 border border-slate-200 text-slate-500 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-700 leading-tight">Application Closed</span>
+                        <span class="text-[11px] font-semibold text-rose-600">आवेदन समाप्त (लास्ट डेट निकल चुकी है)</span>
+                    </div>
+                </div>
+                <span class="text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg">Closed</span>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Official Notification PDF -->
+            {% if exam.link_notification_pdf %}
+            {% if 'Upcoming' in exam.status %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-500 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-700 leading-tight">Official Notification</span>
+                        <span class="text-[11px] text-slate-400">विज्ञप्ति शीघ्र जारी होगी (Coming Soon)</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Awaited</span>
+            </div>
+            {% else %}
+            <a href="{{ exam.link_notification_pdf }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm p-4 rounded-2xl shadow-lg shadow-blue-900/30 flex items-center justify-between group transition transform active:scale-98">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block leading-tight">Official Notification</span>
+                        <span class="text-[11px] font-normal text-blue-100">विज्ञप्ति डाउनलोड करें</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-download text-sm group-hover:translate-y-0.5 transition"></i>
+            </a>
+            {% endif %}
+            {% endif %}
+
+            <!-- Admit Card Button -->
+            {% if exam.link_admit_card %}
+            {% if 'Admit' in exam.status %}
+            <a href="{{ exam.link_admit_card }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-bold text-sm p-4 rounded-2xl shadow-lg shadow-purple-900/30 flex items-center justify-between group transition transform active:scale-98">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-ticket"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block leading-tight">Download Admit Card</span>
+                        <span class="text-[11px] font-normal text-purple-100">प्रवेश पत्र / एग्जाम सिटी जारी</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
+            </a>
+            {% else %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-400 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-400">
+                        <i class="fa-solid fa-ticket"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-600 leading-tight">Admit Card</span>
+                        <span class="text-[11px] text-slate-400">परीक्षा से पूर्व जारी होगा</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Awaited</span>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Answer Key Button -->
+            {% if exam.link_answer_key %}
+            {% if 'Answer' in exam.status or 'Result' in exam.status %}
+            <a href="{{ exam.link_answer_key }}" target="_blank" rel="nofollow noopener" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm p-4 rounded-2xl shadow flex items-center justify-between group transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg text-amber-400">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block leading-tight">Download Answer Key</span>
+                        <span class="text-[11px] font-normal text-slate-300">उत्तर कुंजी चेक करें</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+            </a>
+            {% else %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-400 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-400">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-600 leading-tight">Answer Key</span>
+                        <span class="text-[11px] text-slate-400">परीक्षा संपन्न होने के बाद जारी होगी</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Upcoming</span>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Result Button -->
+            {% if exam.link_result %}
+            {% if 'Result' in exam.status %}
+            <a href="{{ exam.link_result }}" target="_blank" rel="nofollow noopener" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-sm p-4 rounded-2xl shadow-lg shadow-orange-900/30 flex items-center justify-between group transition transform active:scale-98">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block leading-tight">Check Result / Score</span>
+                        <span class="text-[11px] font-normal text-amber-100">रिजल्ट / मेरिट लिस्ट जारी</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
+            </a>
+            {% else %}
+            <div class="bg-slate-50 border border-slate-200 text-slate-400 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-400">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-bold text-slate-600 leading-tight">Result / Score</span>
+                        <span class="text-[11px] text-slate-400">परीक्षा होने के बाद जारी होगा</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">Awaited</span>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Official Website Button -->
+            {% if exam.link_official_website %}
+            <a href="{{ exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm p-4 rounded-2xl shadow flex items-center justify-between group transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg text-sky-400">
+                        <i class="fa-solid fa-globe"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block leading-tight">Official Website</span>
+                        <span class="text-[11px] font-normal text-slate-300">{{ exam.board_name }}</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+            </a>
+            {% endif %}
+
+            <!-- Previous Year Papers -->
+            {% if exam.link_previous_papers %}
+            <a href="{{ exam.link_previous_papers }}" target="_blank" rel="nofollow noopener" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm p-4 rounded-2xl shadow flex items-center justify-between group transition sm:col-span-2 lg:col-span-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg text-rose-400">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block leading-tight">Previous Year Question Papers & Mock Tests</span>
+                        <span class="text-[11px] font-normal text-slate-300">पुराने प्रश्न पत्र और मॉडल पेपर डाउनलोड करें</span>
+                    </div>
+                </div>
+                <span class="text-xs bg-white/10 px-3 py-1 rounded-lg">Official Archive <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></span>
+            </a>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Quick Highlights & Total Vacancies Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-emerald-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-users text-emerald-600"></i> कुल पद (Total Vacancies)
+            </span>
+            <span class="text-base sm:text-lg font-black text-emerald-950 block leading-tight">
+                {{ exam.total_vacancies or 'Various Posts' }}
+            </span>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-blue-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-clock text-blue-600"></i> अंतिम तिथि (Last Date)
+            </span>
+            <span class="text-xs sm:text-sm font-black text-blue-950 block leading-tight">
+                {{ exam.apply_last_date or 'Check Official Portal' }}
+            </span>
+        </div>
+
+        <div class="bg-purple-50 border border-purple-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-purple-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-calendar-days text-purple-600"></i> परीक्षा तिथि (Exam Date)
+            </span>
+            <span class="text-xs sm:text-sm font-black text-purple-950 block leading-tight">
+                {{ exam.exam_date if exam.exam_date else 'घोषित होने पर उपलब्ध' }}
+            </span>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl shadow-xs">
+            <span class="text-[11px] font-bold text-amber-800 uppercase block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-user-clock text-amber-600"></i> आयु सीमा (Age Limit)
+            </span>
+            <span class="text-xs sm:text-sm font-black text-amber-950 block leading-tight">
+                {{ exam.min_age or '18' }} से {{ exam.max_age or 'Rules' }}
+            </span>
+        </div>
+    </div>
+
+    <!-- 2-Column Grid: Important Dates & Application Fee -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Important Dates Table -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+                <h2 class="text-base sm:text-lg font-black text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-calendar-check text-emerald-600"></i>
+                    महत्वपूर्ण तिथियां (Important Dates Schedule)
+                </h2>
+                
+                <div class="divide-y divide-slate-100 text-xs sm:text-sm">
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">विज्ञप्ति जारी (Notification Date)</span>
+                        <span class="font-bold text-slate-800">{{ exam.notification_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">ऑनलाइन आवेदन शुरू (Start Date)</span>
+                        <span class="font-bold text-emerald-700">{{ exam.apply_start_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between bg-rose-50/50 -mx-2 px-2 rounded-lg">
+                        <span class="text-rose-900 font-bold">आवेदन की अंतिम तिथि (Last Date)</span>
+                        <span class="font-black text-rose-700">{{ exam.apply_last_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">फीस भुगतान अंतिम तिथि (Fee Last Date)</span>
+                        <span class="font-bold text-slate-800">{{ exam.fee_last_date or exam.apply_last_date or 'Check Official Portal' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">प्रवेश पत्र (Admit Card Date)</span>
+                        <span class="font-bold text-purple-700">{{ exam.admit_card_date or 'परीक्षा से पूर्व जारी होगा' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between bg-blue-50/50 -mx-2 px-2 rounded-lg">
+                        <span class="text-blue-900 font-bold">लिखित परीक्षा तिथि (Exam Date)</span>
+                        <span class="font-black text-blue-700">{{ exam.exam_date if exam.exam_date else 'अधिसूचना अनुसार' }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">परिणाम / मेरिट (Result Date)</span>
+                        <span class="font-bold text-slate-800">{{ exam.result_date or 'परीक्षा के बाद घोषित' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Fee & Age Limit Box -->
+        <div class="space-y-6">
+            
+            <!-- Application Fee Box -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                <h2 class="text-base sm:text-lg font-black text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-credit-card text-blue-600"></i>
+                    आवेदन शुल्क विवरण (Application Fee Details)
+                </h2>
+                <div class="space-y-3 text-xs sm:text-sm">
+                    <div class="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600 font-medium">General / OBC / EWS वर्ग</span>
+                        <span class="font-black text-slate-900">{{ exam.fee_general or 'As per notification' }}</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600 font-medium">SC / ST / दिव्यांग / महिला वर्ग</span>
+                        <span class="font-black text-slate-900">{{ exam.fee_reserved or 'As per notification' }}</span>
+                    </div>
+                    <div class="pt-2 text-[11px] text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-blue-500"></i>
+                        <span>भुगतान माध्यम: {{ exam.fee_payment_mode or 'Online (Debit/Credit Card, Net Banking, UPI)' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Age Limit Box -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                <h2 class="text-base sm:text-lg font-black text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-user-clock text-amber-600"></i>
+                    आयु सीमा (Age Limit Guidelines)
+                </h2>
+                <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm mb-3">
+                    <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-100">
+                        <span class="block text-slate-500 text-[11px]">न्यूनतम आयु (Min Age)</span>
+                        <span class="font-black text-amber-900 text-sm sm:text-base">{{ exam.min_age or '18 Years' }}</span>
+                    </div>
+                    <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-100">
+                        <span class="block text-slate-500 text-[11px]">अधिकतम आयु (Max Age)</span>
+                        <span class="font-black text-amber-900 text-sm sm:text-base">{{ exam.max_age or 'As per rules' }}</span>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                    <i class="fa-solid fa-shield-halved text-amber-600 mr-1"></i>
+                    {{ exam.age_relaxation or 'सरकारी नियमानुसार आरक्षित वर्गों (SC/ST/OBC/EWS) को अधिकतम आयु सीमा में नियमानुसार विशेष छूट प्रदान की जाएगी।' }}
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Quick Highlights Table -->
+    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-blue-600"></i>
+            संक्षिप्त भर्ती विवरण (Overview)
+        </h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="block text-slate-400 font-semibold mb-1">संस्था / बोर्ड (Board)</span>
+                <span class="font-bold text-slate-800 text-sm">{{ exam.board_name }}</span>
+            </div>
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="block text-slate-400 font-semibold mb-1">परीक्षा श्रेणी (Category)</span>
+                <span class="font-bold text-blue-600 text-sm">{{ exam.category }} Exam</span>
+            </div>
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="block text-slate-400 font-semibold mb-1">आवेदन का माध्यम (Mode)</span>
+                <span class="font-bold text-slate-800 text-sm">Online (आधिकारिक पोर्टल)</span>
+            </div>
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="block text-slate-400 font-semibold mb-1">नौकरी स्थान (Job Location)</span>
+                <span class="font-bold text-slate-800 text-sm">{{ exam.state or 'All India' }}</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Eligibility Criteria -->
+    {% if exam.eligibility_criteria %}
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-user-graduate text-blue-600"></i>
+            शैक्षणिक योग्यता व पात्रता (Eligibility Criteria)
+        </h2>
+        <div class="prose prose-sm max-w-none text-slate-700 leading-relaxed text-xs sm:text-sm whitespace-pre-line bg-slate-50/60 p-4 rounded-2xl border border-slate-100">
+            {{ exam.eligibility_criteria }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Selection Process & Syllabus -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Selection Process -->
+        {% if exam.selection_process %}
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+            <h3 class="text-base sm:text-lg font-black text-slate-900 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-purple-600"></i>
+                चयन प्रक्रिया (Selection Process)
+            </h3>
+            <div class="prose prose-sm max-w-none text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                {{ exam.selection_process }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Syllabus Summary -->
+        {% if exam.syllabus_summary %}
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+            <h3 class="text-base sm:text-lg font-black text-slate-900 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-book text-amber-600"></i>
+                परीक्षा पैटर्न व सिलेबस (Exam Pattern & Syllabus)
+            </h3>
+            <div class="prose prose-sm max-w-none text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                {{ exam.syllabus_summary }}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- How to Apply Step by Step -->
+    {% if exam.how_to_apply %}
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-pointer text-emerald-600"></i>
+            ऑनलाइन आवेदन कैसे करें? (Step-by-Step How to Apply)
+        </h2>
+        <div class="prose prose-sm max-w-none text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line bg-emerald-50/30 p-4 rounded-2xl border border-emerald-100/60">
+            {{ exam.how_to_apply }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- FAQs Section -->
+    {% if exam.faqs and exam.faqs|length > 0 %}
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-circle-question text-amber-500"></i>
+            अक्सर पूछे जाने वाले सवाल (Frequently Asked Questions)
+        </h2>
+        <div class="space-y-3">
+            {% for faq in exam.faqs %}
+            <details class="group p-4 rounded-2xl bg-slate-50 border border-slate-200/70 transition cursor-pointer">
+                <summary class="font-bold text-xs sm:text-sm text-slate-900 flex items-center justify-between list-none">
+                    <span>{{ faq.question }}</span>
+                    <i class="fa-solid fa-chevron-down text-xs text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="pt-3 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/50 mt-3">
+                    {{ faq.answer }}
+                </div>
+            </details>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bottom Secondary Action Banner -->
+    <div class="bg-gradient-to-r from-slate-900 to-blue-950 p-6 rounded-3xl text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg text-center sm:text-left">
+        <div>
+            <h3 class="font-black text-base sm:text-lg">क्या आप आवेदन करने के लिए तैयार हैं?</h3>
+            <p class="text-xs text-slate-300">सीधे संबंधित सरकारी बोर्ड की आधिकारिक वेबसाइट पर जाएं</p>
+        </div>
+        <div class="flex items-center gap-3">
+            {% if exam.link_apply_online %}
+            <a href="{{ exam.link_apply_online }}" target="_blank" rel="nofollow noopener" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-md transition flex items-center gap-2">
+                <span>Apply Online Now</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+            </a>
+            {% endif %}
+            {% if exam.link_official_website %}
+            <a href="{{ exam.link_official_website }}" target="_blank" rel="nofollow noopener" class="bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-globe text-xs"></i>
+                <span>Official Site</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bottom Back to Home & Category Bar -->
+    <div class="pt-6 pb-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <a href="/" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs sm:text-sm border border-slate-200 hover:border-blue-300 shadow-xs hover:shadow transition group">
+            <i class="fa-solid fa-arrow-left text-blue-600 group-hover:-translate-x-1 transition-transform"></i>
+            <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
+        </a>
+        <div class="flex items-center gap-2">
+            <a href="/category/{{ exam.category }}" class="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs sm:text-sm transition border border-blue-200">
+                <i class="fa-solid fa-layer-group text-blue-600 text-xs"></i>
+                <span>{{ exam.category }} श्रेणी</span>
+            </a>
+            <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition border border-slate-200 cursor-pointer">
+                <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
+                <span>पिछला पेज (Back)</span>
+            </button>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
