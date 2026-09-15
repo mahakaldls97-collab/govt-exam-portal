@@ -12,6 +12,18 @@ SARKARIEXAM_FEEDS = [
     "https://www.sarkariexam.com/category/top-online-form/feed/",
 ]
 
+SARKARIEXAM_CATEGORIES = [
+    "https://www.sarkariexam.com/category/top-online-form/",
+    "https://www.sarkariexam.com/category/top-online-form/page/2/",
+    "https://www.sarkariexam.com/category/admit-card/",
+    "https://www.sarkariexam.com/category/exam-result/",
+    "https://www.sarkariexam.com/category/railway-jobs/",
+    "https://www.sarkariexam.com/category/teaching-jobs/",
+    "https://www.sarkariexam.com/category/bank-jobs/",
+    "https://www.sarkariexam.com/category/defence-jobs/",
+    "https://www.sarkariexam.com/"
+]
+
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
@@ -105,12 +117,88 @@ def fetch_post_html(url: str) -> str:
     except Exception:
         return ""
 
+def process_exam_entry(title: str, source_url: str) -> bool:
+    """Processes a single exam title and URL into portal.db"""
+    clean_title = re.sub(r'&#[0-9]+;', '', title)
+    clean_title = re.sub(r'\s+', ' ', clean_title).strip()
+    
+    if len(clean_title) < 10:
+        return False
+        
+    slug = slugify(clean_title)
+    if exam_exists(slug=slug, title=clean_title, source_url=source_url):
+        return False
+        
+    post_html = fetch_post_html(source_url)
+    deep_info = extract_clean_details(post_html) if post_html else {}
+    
+    state_name, state_info = detect_state(clean_title)
+    board_name = state_info.get('default_board', 'Central Government / All India')
+    
+    category = detect_category(clean_title, board_name)
+    status = detect_status(clean_title)
+    
+    apply_start_date = deep_info.get('apply_start_date') or ('Check Official Portal' if status == 'Applications Open' else 'Closed')
+    apply_last_date = deep_info.get('apply_last_date') or ('Check Official Portal' if status == 'Applications Open' else 'Closed')
+    exam_date = deep_info.get('exam_date', '')
+    total_vacancies = deep_info.get('total_vacancies') or 'Check Official Notification'
+    fee_general = deep_info.get('fee_general') or 'As per official notification'
+    fee_reserved = deep_info.get('fee_reserved') or 'As per official notification'
+    min_age = deep_info.get('min_age') or '18 Years'
+    max_age = deep_info.get('max_age') or 'As per rules'
+    
+    exam_record = {
+        'title': clean_title,
+        'slug': slug,
+        'category': category,
+        'board_name': board_name,
+        'total_vacancies': total_vacancies,
+        'short_description': f"Official recruitment notification for {clean_title}. Total vacancies: {total_vacancies}. Check eligibility, important dates, fee details and direct official links to apply.",
+        'status': status,
+        'notification_date': datetime.now().strftime('%d %B %Y'),
+        'apply_start_date': apply_start_date,
+        'apply_last_date': apply_last_date,
+        'fee_last_date': deep_info.get('fee_last_date', apply_last_date),
+        'admit_card_date': deep_info.get('admit_card_date', 'Before Exam'),
+        'exam_date': exam_date,
+        'fee_general': fee_general,
+        'fee_reserved': fee_reserved,
+        'fee_payment_mode': 'Online (Debit/Credit Card, Net Banking, UPI)',
+        'min_age': min_age,
+        'max_age': max_age,
+        'eligibility_criteria': f'Please refer to the official notification document for detailed eligibility criteria and educational qualifications for {total_vacancies}.',
+        'selection_process': '1. Written Examination / CBT\n2. Document Verification\n3. Medical Examination',
+        'syllabus_summary': 'General Awareness, Reasoning Ability, Quantitative Aptitude, English/Hindi & Subject Knowledge.',
+        'how_to_apply': f'1. Visit official link: {deep_info.get("link_apply_online", source_url)}.\n2. Complete registration/login.\n3. Fill form, upload documents, and submit before {apply_last_date}.',
+        'link_apply_online': deep_info.get('link_apply_online', source_url),
+        'link_notification_pdf': deep_info.get('link_notification_pdf', source_url),
+        'link_admit_card': deep_info.get('link_admit_card', source_url),
+        'link_answer_key': deep_info.get('link_answer_key', source_url),
+        'link_result': deep_info.get('link_result', source_url),
+        'link_official_website': deep_info.get('link_official_website', 'https://www.sarkariexam.com/'),
+        'meta_title': f"{clean_title} - Last Date, Exam Date & Apply Online",
+        'meta_description': f"Check {clean_title} details. Total {total_vacancies}, Last Date: {apply_last_date}, Exam Date: {exam_date}. Direct official application link.",
+        'keywords': f"{clean_title}, sarkari exam, govt jobs 2026, admit card, result",
+        'is_featured': 0,
+        'is_auto_synced': 1,
+        'source_url': source_url,
+        'state': state_name
+    }
+    
+    try:
+        create_exam(exam_record)
+        print(f"  [SARKARIEXAM SYNCED] [{status}] {clean_title[:45]} | Vac: {total_vacancies} | Last: {apply_last_date}")
+        return True
+    except Exception as e:
+        print(f"  [SARKARIEXAM INSERT ERROR] {e}")
+        return False
+
 def fetch_and_sync_sarkariexam():
     """
-    Crawls RSS feeds and homepage of sarkariexam.com to extract
+    Crawls RSS feeds, categories, and homepage of sarkariexam.com to extract ALL
     latest government jobs, admit cards, and results with full dates, fees, and vacancies.
     """
-    print("[SARKARIEXAM CRAWLER] Starting deep synchronization from sarkariexam.com...")
+    print("[SARKARIEXAM CRAWLER] Starting comprehensive synchronization from sarkariexam.com...")
     items_found = 0
     items_added = 0
     seen_urls = set()
@@ -138,167 +226,40 @@ def fetch_and_sync_sarkariexam():
                     seen_urls.add(source_url)
                     items_found += 1
                     
-                    clean_title = re.sub(r'&#[0-9]+;', '', raw_title)
-                    clean_title = re.sub(r'\s+', ' ', clean_title).strip()
-                    
-                    slug = slugify(clean_title)
-                    if exam_exists(slug=slug, title=clean_title, source_url=source_url):
-                        continue
-                        
-                    # Fetch deep post details (Dates, Fees, Vacancies, Links)
-                    post_html = fetch_post_html(source_url)
-                    deep_info = extract_clean_details(post_html) if post_html else {}
-                    
-                    state_name, state_info = detect_state(clean_title)
-                    board_name = state_info.get('default_board', 'Central Government / All India')
-                    
-                    category = detect_category(clean_title, board_name)
-                    status = detect_status(clean_title)
-                    
-                    apply_start_date = deep_info.get('apply_start_date') or ('Check Official Portal' if status == 'Applications Open' else 'Closed')
-                    apply_last_date = deep_info.get('apply_last_date') or ('Check Official Portal' if status == 'Applications Open' else 'Closed')
-                    exam_date = deep_info.get('exam_date', '')
-                    total_vacancies = deep_info.get('total_vacancies') or 'Check Official Notification'
-                    fee_general = deep_info.get('fee_general') or 'As per official notification'
-                    fee_reserved = deep_info.get('fee_reserved') or 'As per official notification'
-                    min_age = deep_info.get('min_age') or '18 Years'
-                    max_age = deep_info.get('max_age') or 'As per rules'
-                    
-                    exam_record = {
-                        'title': clean_title,
-                        'slug': slug,
-                        'category': category,
-                        'board_name': board_name,
-                        'total_vacancies': total_vacancies,
-                        'short_description': f"Official recruitment notification for {clean_title}. Total vacancies: {total_vacancies}. Check eligibility, important dates, fee details and direct official links to apply.",
-                        'status': status,
-                        'notification_date': datetime.now().strftime('%d %B %Y'),
-                        'apply_start_date': apply_start_date,
-                        'apply_last_date': apply_last_date,
-                        'fee_last_date': deep_info.get('fee_last_date', apply_last_date),
-                        'admit_card_date': deep_info.get('admit_card_date', 'Before Exam'),
-                        'exam_date': exam_date,
-                        'fee_general': fee_general,
-                        'fee_reserved': fee_reserved,
-                        'fee_payment_mode': 'Online (Debit/Credit Card, Net Banking, UPI)',
-                        'min_age': min_age,
-                        'max_age': max_age,
-                        'eligibility_criteria': f'Please refer to the official notification document for detailed eligibility criteria and educational qualifications for {total_vacancies}.',
-                        'selection_process': '1. Written Examination / CBT\n2. Document Verification\n3. Medical Examination',
-                        'syllabus_summary': 'General Awareness, Reasoning Ability, Quantitative Aptitude, English/Hindi & Subject Knowledge.',
-                        'how_to_apply': f'1. Visit official link: {deep_info.get("link_apply_online", source_url)}.\n2. Complete registration/login.\n3. Fill form, upload documents, and submit before {apply_last_date}.',
-                        'link_apply_online': deep_info.get('link_apply_online', source_url),
-                        'link_notification_pdf': deep_info.get('link_notification_pdf', source_url),
-                        'link_admit_card': deep_info.get('link_admit_card', source_url),
-                        'link_answer_key': deep_info.get('link_answer_key', source_url),
-                        'link_result': deep_info.get('link_result', source_url),
-                        'link_official_website': deep_info.get('link_official_website', 'https://www.sarkariexam.com/'),
-                        'meta_title': f"{clean_title} - Last Date, Exam Date & Apply Online",
-                        'meta_description': f"Check {clean_title} details. Total {total_vacancies}, Last Date: {apply_last_date}, Exam Date: {exam_date}. Direct official application link.",
-                        'keywords': f"{clean_title}, sarkari exam, govt jobs 2026, admit card, result",
-                        'is_featured': 0,
-                        'is_auto_synced': 1,
-                        'source_url': source_url,
-                        'state': state_name
-                    }
-                    
-                    try:
-                        create_exam(exam_record)
+                    if process_exam_entry(raw_title, source_url):
                         items_added += 1
-                        print(f"  [SARKARIEXAM DEEP ADDED] [{status}] {clean_title[:45]} | Dates: {apply_start_date} to {apply_last_date} | Exam: {exam_date}")
-                    except Exception as e:
-                        print(f"  [SARKARIEXAM INSERT ERROR] {e}")
         except Exception as e:
             print(f"  [SARKARIEXAM FEED ERROR] {feed_url} -> {e}")
+
+    # 2. Fetch All Category Pages (Top Online Forms, Admit Cards, Results, Railway, Bank, Teaching, Defence)
+    for cat_url in SARKARIEXAM_CATEGORIES:
+        try:
+            req = urllib.request.Request(cat_url, headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                page_html = resp.read().decode('utf-8', errors='ignore')
+                matches = re.findall(r'<a[^>]+href=[\'"](https?://www.sarkariexam.com/[a-z0-9-]+/)[\'"][^>]*>(.*?)</a>', page_html, re.I | re.DOTALL)
+                
+                for url_path, link_text in matches:
+                    if url_path in seen_urls or any(skip in url_path for skip in ['category', 'tag', 'about', 'contact', 'privacy', 'disclaimer', 'author', 'page', 'feed']):
+                        continue
+                    seen_urls.add(url_path)
+                    
+                    clean_t = re.sub(r'<[^>]+>', '', link_text).strip()
+                    clean_t = html.unescape(clean_t)
+                    if len(clean_t) < 10 or len(clean_t) > 150:
+                        continue
+                        
+                    items_found += 1
+                    if process_exam_entry(clean_t, url_path):
+                        items_added += 1
+        except Exception as e:
+            print(f"  [SARKARIEXAM CATEGORY ERROR] {cat_url} -> {e}")
 
     log_sync(
         status="SUCCESS",
         items_found=items_found,
         items_added=items_added,
-        message=f"SarkariExam Deep Auto-Sync completed: {items_found} items found, {items_added} new items added."
+        message=f"SarkariExam Comprehensive Auto-Sync: {items_found} items found, {items_added} new items added."
     )
     print(f"[SARKARIEXAM CRAWLER COMPLETE] Found: {items_found}, Added: {items_added}")
     return items_added
-
-def enrich_existing_sarkariexam_records(limit=50):
-    """
-    Enriches existing exams in database that have 'Check Official Portal' by deep parsing their source URLs.
-    """
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id, title, source_url, status 
-        FROM exams 
-        WHERE source_url LIKE '%sarkariexam.com%' 
-        AND (apply_last_date = 'Check Official Portal' OR exam_date = '' OR total_vacancies = 'Check Official Notification')
-        LIMIT ?
-    """, (limit,))
-    rows = cursor.fetchall()
-    
-    enriched = 0
-    print(f"[ENRICHER] Enriching {len(rows)} existing sarkariexam records with deep dates/fees/vacancies...")
-    
-    for row in rows:
-        exam_id = row['id']
-        url = row['source_url']
-        title = row['title']
-        
-        post_html = fetch_post_html(url)
-        if not post_html:
-            continue
-            
-        details = extract_clean_details(post_html)
-        if not details:
-            continue
-            
-        updates = []
-        params = []
-        
-        if details.get('total_vacancies'):
-            updates.append("total_vacancies = ?")
-            params.append(details['total_vacancies'])
-        if details.get('apply_start_date'):
-            updates.append("apply_start_date = ?")
-            params.append(details['apply_start_date'])
-        if details.get('apply_last_date'):
-            updates.append("apply_last_date = ?")
-            params.append(details['apply_last_date'])
-        if details.get('fee_last_date'):
-            updates.append("fee_last_date = ?")
-            params.append(details['fee_last_date'])
-        if details.get('exam_date'):
-            updates.append("exam_date = ?")
-            params.append(details['exam_date'])
-        if details.get('admit_card_date'):
-            updates.append("admit_card_date = ?")
-            params.append(details['admit_card_date'])
-        if details.get('fee_general'):
-            updates.append("fee_general = ?")
-            params.append(details['fee_general'])
-        if details.get('fee_reserved'):
-            updates.append("fee_reserved = ?")
-            params.append(details['fee_reserved'])
-        if details.get('min_age'):
-            updates.append("min_age = ?")
-            params.append(details['min_age'])
-        if details.get('max_age'):
-            updates.append("max_age = ?")
-            params.append(details['max_age'])
-        if details.get('link_apply_online'):
-            updates.append("link_apply_online = ?")
-            params.append(details['link_apply_online'])
-        if details.get('link_notification_pdf'):
-            updates.append("link_notification_pdf = ?")
-            params.append(details['link_notification_pdf'])
-            
-        if updates:
-            params.append(exam_id)
-            query = f"UPDATE exams SET {', '.join(updates)} WHERE id = ?"
-            cursor.execute(query, params)
-            enriched += 1
-            print(f"  [ENRICHED #{exam_id}] {title[:40]} | Vac: {details.get('total_vacancies')} | Last: {details.get('apply_last_date')} | Exam: {details.get('exam_date')}")
-            
-    conn.commit()
-    conn.close()
-    print(f"[ENRICHER COMPLETE] Enriched {enriched} records.")
-    return enriched
