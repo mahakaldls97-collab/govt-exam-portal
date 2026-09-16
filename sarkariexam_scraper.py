@@ -4,7 +4,67 @@ import re
 import html
 from datetime import datetime
 from database import get_db, exam_exists, create_exam, log_sync
-from auto_scraper import detect_state, detect_category, detect_status, slugify
+def slugify(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r'[^a-z0-9\s-]', '', text)
+    text = re.sub(r'[\s-]+', '-', text).strip('-')
+    return text[:80]
+
+def detect_status(title: str) -> str:
+    t = title.lower()
+    if any(k in t for k in ['result', 'cutoff', 'score card', 'merit list', 'marks', 'selected list']):
+        return 'Result'
+    if any(k in t for k in ['admit card', 'hall ticket', 'call letter', 'exam date', 'city slip', 'exam schedule']):
+        return 'Admit Card'
+    if any(k in t for k in ['answer key', 'response sheet', 'objection']):
+        return 'Admit Card'
+    if any(k in t for k in ['upcoming', 'soon', 'expected', 'calender', 'calendar']):
+        return 'Upcoming'
+    return 'Applications Open'
+
+def detect_category(title: str, board_name: str = '') -> str:
+    combined = f"{title} {board_name}".lower()
+    if any(k in combined for k in ['railway', 'rrb', 'rrc', 'alp', 'ntpc', 'technician', 'group d', 'loco pilot']):
+        return 'Railway'
+    if any(k in combined for k in ['police', 'constable', 'sub inspector', 'si ', 'asi ', 'daroga', 'home guard', 'army', 'navy', 'air force', 'nda', 'cds', 'agniveer', 'crpf', 'bsf', 'cisf', 'itbp', 'ssb', 'defence', 'defense']):
+        return 'Police'
+    if any(k in combined for k in ['ctet', 'reet', 'uptet', 'htet', 'btet', 'mptet', 'kvs', 'nvs', 'dsssb prt', 'tgt', 'pgt', 'teacher', 'shikshak', 'bed', 'deled', 'ugc net', 'csir net']):
+        return 'Teaching'
+    if any(k in combined for k in ['bank', 'ibps', 'sbi', 'rbi', 'nabard', 'sebi', 'lic', 'po ', 'clerk', 'so ']):
+        return 'Banking'
+    if any(k in combined for k in ['ssc', 'cgl', 'chsl', 'mts', 'cpo', 'gd constable', 'stenographer', 'selection post']):
+        return 'SSC'
+    if any(k in combined for k in ['upsc', 'ias', 'ips', 'ifs', 'civil services', 'cse', 'nda', 'cds', 'epfo']):
+        return 'UPSC'
+    return 'State'
+
+def detect_state(title: str):
+    t = title.lower()
+    state_keywords = {
+        'Rajasthan': ('Rajasthan', {'default_board': 'RSMSSB / RPSC Rajasthan'}),
+        'Uttar Pradesh': ('Uttar Pradesh', {'default_board': 'UPSSSC / UPPSC Uttar Pradesh'}),
+        'Bihar': ('Bihar', {'default_board': 'BPSC / BSSC Bihar'}),
+        'Madhya Pradesh': ('Madhya Pradesh', {'default_board': 'MPPSC / MPESB Madhya Pradesh'}),
+        'Haryana': ('Haryana', {'default_board': 'HSSC / HPSC Haryana'}),
+        'Delhi': ('Delhi', {'default_board': 'DSSSB Delhi'}),
+        'Maharashtra': ('Maharashtra', {'default_board': 'MPSC Maharashtra'}),
+        'Gujarat': ('Gujarat', {'default_board': 'GPSC / GSSSB Gujarat'}),
+        'Punjab': ('Punjab', {'default_board': 'PPSC / PSSSB Punjab'}),
+        'Uttarakhand': ('Uttarakhand', {'default_board': 'UKPSC / UKSSSC Uttarakhand'}),
+        'Jharkhand': ('Jharkhand', {'default_board': 'JSSC / JPSC Jharkhand'}),
+        'Odisha': ('Odisha', {'default_board': 'OSSC / OPSC Odisha'}),
+        'Chhattisgarh': ('Chhattisgarh', {'default_board': 'CGPSC Chhattisgarh'}),
+        'West Bengal': ('West Bengal', {'default_board': 'WBPSC / WBPRB West Bengal'}),
+        'Assam & North East': ('Assam & North East', {'default_board': 'APSC Assam / North East'}),
+        'Karnataka': ('Karnataka', {'default_board': 'KPSC Karnataka'}),
+        'Tamil Nadu': ('Tamil Nadu', {'default_board': 'TNPSC Tamil Nadu'}),
+        'Andhra Pradesh & Telangana': ('Andhra Pradesh & Telangana', {'default_board': 'APPSC / TSPSC'}),
+        'Jammu & Kashmir': ('Jammu & Kashmir', {'default_board': 'JKSSB / JKPSC J&K'}),
+    }
+    for state_name, (detected_state, info) in state_keywords.items():
+        if state_name.lower() in t or any(w in t for w in state_name.lower().split()):
+            return detected_state, info
+    return 'All India', {'default_board': 'Central Government / All India'}
 
 SARKARIEXAM_FEEDS = [
     "https://www.sarkariexam.com/feed/",
