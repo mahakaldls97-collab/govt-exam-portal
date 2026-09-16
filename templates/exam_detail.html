@@ -360,7 +360,7 @@
             <span class="text-[11px] font-bold text-emerald-800 uppercase block mb-1 flex items-center gap-1">
                 <i class="fa-solid fa-users text-emerald-600"></i> कुल पद (Total Vacancies)
             </span>
-            <span class="text-base sm:text-lg font-black text-emerald-950 block leading-tight">
+            <span class="text-xs sm:text-base font-black text-emerald-950 block leading-tight">
                 {{ exam.total_vacancies or 'Various Posts' }}
             </span>
         </div>
@@ -370,7 +370,11 @@
                 <i class="fa-solid fa-clock text-blue-600"></i> अंतिम तिथि (Last Date)
             </span>
             <span class="text-xs sm:text-sm font-black text-blue-950 block leading-tight">
+                {% if 'Admit' in exam.status or 'Result' in exam.status or 'Closed' in (exam.apply_last_date or '') %}
+                <span class="text-rose-700">आवेदन संपन्न (Closed)</span>
+                {% else %}
                 {{ exam.apply_last_date or 'Check Official Portal' }}
+                {% endif %}
             </span>
         </div>
 
@@ -379,7 +383,13 @@
                 <i class="fa-solid fa-calendar-days text-purple-600"></i> परीक्षा तिथि (Exam Date)
             </span>
             <span class="text-xs sm:text-sm font-black text-purple-950 block leading-tight">
-                {{ exam.exam_date if exam.exam_date else 'घोषित होने पर उपलब्ध' }}
+                {% if exam.exam_date and exam.exam_date not in ['अधिसूचना अनुसार', 'घोषित होने पर उपलब्ध'] %}
+                <span class="text-purple-700 font-bold">{{ exam.exam_date }}</span>
+                {% elif 'Admit' in exam.status %}
+                <span class="text-indigo-700 font-bold">शेड्यूल जारी (Notice देखें)</span>
+                {% else %}
+                घोषित होने पर उपलब्ध
+                {% endif %}
             </span>
         </div>
 
@@ -411,27 +421,65 @@
                     </div>
                     <div class="py-2.5 flex items-center justify-between">
                         <span class="text-slate-500 font-medium">ऑनलाइन आवेदन शुरू (Start Date)</span>
-                        <span class="font-bold text-emerald-700">{{ exam.apply_start_date or 'Check Official Portal' }}</span>
+                        <span class="font-bold text-emerald-700">
+                            {% if 'Admit' in exam.status or 'Result' in exam.status or 'Closed' in (exam.apply_last_date or '') %}
+                            प्रक्रिया संपन्न (Completed)
+                            {% else %}
+                            {{ exam.apply_start_date or 'Check Official Portal' }}
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="py-2.5 flex items-center justify-between bg-rose-50/50 -mx-2 px-2 rounded-lg">
                         <span class="text-rose-900 font-bold">आवेदन की अंतिम तिथि (Last Date)</span>
-                        <span class="font-black text-rose-700">{{ exam.apply_last_date or 'Check Official Portal' }}</span>
+                        <span class="font-black text-rose-700">
+                            {% if 'Admit' in exam.status or 'Result' in exam.status or 'Closed' in (exam.apply_last_date or '') %}
+                            आवेदन समाप्त (Closed)
+                            {% else %}
+                            {{ exam.apply_last_date or 'Check Official Portal' }}
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="py-2.5 flex items-center justify-between">
                         <span class="text-slate-500 font-medium">फीस भुगतान अंतिम तिथि (Fee Last Date)</span>
-                        <span class="font-bold text-slate-800">{{ exam.fee_last_date or exam.apply_last_date or 'Check Official Portal' }}</span>
+                        <span class="font-bold text-slate-800">
+                            {% if 'Admit' in exam.status or 'Result' in exam.status or 'Closed' in (exam.apply_last_date or '') %}
+                            प्रक्रिया समाप्त (Closed)
+                            {% else %}
+                            {{ exam.fee_last_date or exam.apply_last_date or 'Check Official Portal' }}
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="py-2.5 flex items-center justify-between">
                         <span class="text-slate-500 font-medium">प्रवेश पत्र (Admit Card Date)</span>
-                        <span class="font-bold text-purple-700">{{ exam.admit_card_date or 'परीक्षा से पूर्व जारी होगा' }}</span>
+                        <span class="font-bold text-purple-700">
+                            {% if 'Admit' in exam.status %}
+                            <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-black">उपलब्ध / जारी</span>
+                            {% else %}
+                            {{ exam.admit_card_date or 'परीक्षा से पूर्व जारी होगा' }}
+                            {% endif %}
+                        </span>
                     </div>
-                    <div class="py-2.5 flex items-center justify-between bg-blue-50/50 -mx-2 px-2 rounded-lg">
+                    <div class="py-2.5 flex items-center justify-between bg-blue-50/60 -mx-2 px-2 rounded-lg">
                         <span class="text-blue-900 font-bold">लिखित परीक्षा तिथि (Exam Date)</span>
-                        <span class="font-black text-blue-700">{{ exam.exam_date if exam.exam_date else 'अधिसूचना अनुसार' }}</span>
+                        <span class="font-black text-blue-800">
+                            {% if exam.exam_date and exam.exam_date not in ['अधिसूचना अनुसार', 'घोषित होने पर उपलब्ध'] %}
+                            <span class="bg-blue-100 text-blue-900 px-2.5 py-1 rounded-md border border-blue-200">{{ exam.exam_date }}</span>
+                            {% elif 'Admit' in exam.status %}
+                            <span class="bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded-md">शेड्यूल जारी (Notice देखें)</span>
+                            {% else %}
+                            अधिसूचना अनुसार
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="py-2.5 flex items-center justify-between">
                         <span class="text-slate-500 font-medium">परिणाम / मेरिट (Result Date)</span>
-                        <span class="font-bold text-slate-800">{{ exam.result_date or 'परीक्षा के बाद घोषित' }}</span>
+                        <span class="font-bold text-slate-800">
+                            {% if 'Result' in exam.status %}
+                            <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-black">परिणाम घोषित (Out)</span>
+                            {% else %}
+                            {{ exam.result_date or 'परीक्षा के बाद घोषित' }}
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
             </div>
