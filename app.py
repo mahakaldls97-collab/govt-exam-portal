@@ -209,7 +209,7 @@ Sitemap: {base_url}/sitemap.xml
 async def sitemap_xml(request: Request):
     base_url = str(request.base_url).rstrip('/')
     exams = get_all_exams(limit=1000)
-    categories = ["Police", "SSC", "Railway", "Teaching", "UPSC", "Banking", "State"]
+    categories = ["Police", "SSC", "Railway", "Teaching", "UPSC", "Banking", "State", "Others"]
     
     xml_lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
