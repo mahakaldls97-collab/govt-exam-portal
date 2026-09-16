@@ -54,25 +54,11 @@ async def background_vacancy_crawler():
         await asyncio.sleep(3600)
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     init_db()
     init_admin()
     seed()
-    # Run initial vacancy sync and start background crawler
-    try:
-        fetch_and_sync_vacancies()
-    except Exception as e:
-        print(f"Startup initial sync notice: {e}")
-    try:
-        fetch_and_sync_sarkariexam()
-    except Exception as e:
-        print(f"Startup sarkariexam sync notice: {e}")
-    # Run initial cleanup
-    try:
-        res = auto_cleanup_expired_exams()
-        print(f"[STARTUP LIFECYCLE] Moved to Admit Card: {res.get('moved_to_admit', 0)}, Moved to Result: {res.get('moved_to_result', 0)}, Archived: {res.get('archived', 0)}")
-    except Exception as e:
-        print(f"Startup cleanup notice: {e}")
+    # Start non-blocking background worker
     asyncio.create_task(background_vacancy_crawler())
 
 # Helper to check admin session
