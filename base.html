@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="hi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SarkariNexus 360™ - India's #1 3D Government Exam & Recruitment Portal 2026{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}SarkariNexus 360 - India's premier 3D government exam intelligence portal. Live notifications, direct official apply links, admit cards, and results.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}SarkariNexus, Sarkari Result, Sarkari Bharti 2026, Government Jobs 2026, Admit Card, Online Form, Results, StudyGovtHelp{% endblock %}">
+    
+    <!-- Tailwind CSS with Typography -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        },
+                        nexus: {
+                            dark: '#090D16',
+                            card: '#111827',
+                            surface: '#1E293B',
+                            accent: '#38BDF8',
+                            glow: '#6366F1'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'Noto Sans Devanagari', 'sans-serif'],
+                        display: ['Outfit', 'Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome 6 Pro Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts: Plus Jakarta Sans, Outfit, Noto Sans Devanagari -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', sans-serif; }
+        h1, h2, h3, h4, .font-heading { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; }
+        
+        /* 3D Glassmorphic and Card Effects */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+        }
+        
+        .card-3d {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(226, 232, 240, 0.6);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .card-3d:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(56, 189, 248, 0.4);
+        }
+
+        .category-hub-card {
+            background: #ffffff;
+            border-radius: 1.25rem;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.07);
+            transition: all 0.3s ease;
+        }
+
+        .category-hub-card:hover {
+            box-shadow: 0 20px 35px -10px rgba(14, 165, 233, 0.15);
+            border-color: #cbd5e1;
+        }
+
+        .badge-glow {
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        /* 3D Button Gradient */
+        .btn-3d-emerald {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            transition: all 0.2s ease;
+        }
+        .btn-3d-emerald:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-3d-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            transition: all 0.2s ease;
+        }
+        .btn-3d-blue:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+        }
+
+        .btn-3d-amber {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        /* Pulse Animations */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .live-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+    </style>
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-white">
+
+    <div>
+        <!-- 3D Ultra-Modern Top Navigation Bar -->
+        <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
+            <!-- Top Announcement Ticker -->
+            <div class="bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-white/5 py-1.5 px-4 text-xs text-slate-300">
+                <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 overflow-hidden whitespace-nowrap">
+                        <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-pulse"></span> LIVE 3D ENGINE
+                        </span>
+                        <span class="truncate text-slate-300 text-[11px] font-medium">
+                            ⚡ Real-Time Recruitment Feeds Auto-Synced across Central & All Indian States (studygovthelp.in + sarkariresult)
+                        </span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-4 text-[11px] font-semibold text-slate-400 shrink-0">
+                        <span class="text-cyan-400"><i class="fa-solid fa-bolt mr-1"></i> Fast 3D UI</span>
+                        <span class="text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i> 100% Official Links</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Brand & Navigation -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div class="flex items-center justify-between gap-4">
+                    
+                    <!-- Logo / Brand -->
+                    <a href="/" class="flex items-center gap-3 group">
+                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl shadow-lg shadow-cyan-500/25 group-hover:scale-105 group-hover:shadow-cyan-500/40 transition-all duration-300 border border-white/20">
+                            <i class="fa-solid fa-cube"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-heading text-2xl sm:text-3xl font-black tracking-tight text-white group-hover:text-cyan-400 transition">
+                                    Sarkari<span class="text-cyan-400">Nexus</span>
+                                </span>
+                                <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-md shadow-xs">
+                                    360™
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 font-medium -mt-1 hidden sm:block">
+                                Premier 3D Government Recruitment & Career Hub
+                            </p>
+                        </div>
+                    </a>
+
+                    <!-- Nav Links for Desktop -->
+                    <nav class="hidden lg:flex items-center gap-1 bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700/60 shadow-inner">
+                        <a href="/" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {% if request.url.path == '/' %}bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/25{% else %}text-slate-300 hover:text-white hover:bg-slate-700/50{% endif %}">
+                            <i class="fa-solid fa-house text-[11px]"></i> Home
+                        </a>
+                        <a href="/category/Latest%20Jobs" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {% if 'Latest' in request.url.path %}bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25{% else %}text-slate-300 hover:text-white hover:bg-slate-700/50{% endif %}">
+                            <i class="fa-solid fa-briefcase text-[11px] text-emerald-400"></i> Latest Jobs
+                        </a>
+                        <a href="/category/Admit%20Card" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {% if 'Admit' in request.url.path %}bg-blue-500 text-slate-950 shadow-md shadow-blue-500/25{% else %}text-slate-300 hover:text-white hover:bg-slate-700/50{% endif %}">
+                            <i class="fa-solid fa-id-card text-[11px] text-cyan-400"></i> Admit Card
+                        </a>
+                        <a href="/category/Results" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {% if 'Results' in request.url.path %}bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25{% else %}text-slate-300 hover:text-white hover:bg-slate-700/50{% endif %}">
+                            <i class="fa-solid fa-trophy text-[11px] text-amber-400"></i> Results
+                        </a>
+                        <a href="/category/Answer%20Key" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/50 transition">
+                            Answer Key
+                        </a>
+                        <a href="/category/Teaching" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/50 transition">
+                            Teaching
+                        </a>
+                        <a href="/category/Police" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/50 transition">
+                            Police
+                        </a>
+                    </nav>
+
+                    <!-- Search CTA & Mobile Toggle -->
+                    <div class="flex items-center gap-2.5">
+                        <a href="/search?q=" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-md shadow-cyan-500/20 transition flex items-center gap-1.5 transform active:scale-95">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                            <span class="hidden sm:inline">Explore</span> Search
+                        </a>
+                        <button onclick="document.getElementById('mobile-nav').classList.toggle('hidden')" class="lg:hidden w-10 h-10 rounded-xl bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 text-lg">
+                            <i class="fa-solid fa-bars"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Dropdown -->
+            <div id="mobile-nav" class="hidden lg:hidden bg-slate-900 border-t border-slate-800 px-4 py-3 space-y-1.5 shadow-2xl">
+                <a href="/" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-800 text-cyan-400">
+                    <i class="fa-solid fa-house mr-2"></i> Home
+                </a>
+                <a href="/category/Latest%20Jobs" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-briefcase mr-2 text-emerald-400"></i> Latest Jobs
+                </a>
+                <a href="/category/Admit%20Card" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-id-card mr-2 text-cyan-400"></i> Admit Card
+                </a>
+                <a href="/category/Results" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-trophy mr-2 text-amber-400"></i> Results & Scorecards
+                </a>
+                <a href="/category/Answer%20Key" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-key mr-2 text-purple-400"></i> Answer Key
+                </a>
+                <a href="/category/Teaching" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-chalkboard-user mr-2 text-pink-400"></i> Teaching & CTET
+                </a>
+                <a href="/category/Police" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-shield mr-2 text-blue-400"></i> Police & Defense
+                </a>
+                <a href="/category/Railway" class="block px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-train mr-2 text-orange-400"></i> Railway RRB
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Holder -->
+        <main class="min-h-[80vh]">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- 3D Ultra-Professional Dark Footer -->
+    <footer class="bg-slate-950 text-slate-400 border-t border-slate-800/80 mt-16 relative overflow-hidden">
+        <!-- Glow accents -->
+        <div class="absolute top-0 left-1/4 w-96 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-0 right-1/4 w-96 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                
+                <!-- Brand Info -->
+                <div class="space-y-3 lg:col-span-1">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-cyan-500 flex items-center justify-center text-slate-950 font-black text-base shadow-md shadow-cyan-500/30">
+                            <i class="fa-solid fa-cube"></i>
+                        </div>
+                        <span class="font-heading text-xl font-black text-white">
+                            Sarkari<span class="text-cyan-400">Nexus</span> 360
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Next-Generation 3D recruitment portal delivering instant verified government job notifications, admit cards, answer keys, and declared results with 100% official direct portals.
+                    </p>
+                    <div class="pt-2 flex items-center gap-2 text-xs text-emerald-400 font-bold">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 live-pulse"></span>
+                        <span>Auto-Sync Active (Every 30 Min)</span>
+                    </div>
+                </div>
+
+                <!-- Fast Nav Links -->
+                <div>
+                    <h4 class="text-white font-heading font-bold text-sm mb-3.5 flex items-center gap-2">
+                        <i class="fa-solid fa-compass text-cyan-400"></i> Quick Portals
+                    </h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Home Command Center</a></li>
+                        <li><a href="/category/Latest%20Jobs" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> All Online Application Forms</a></li>
+                        <li><a href="/category/Admit%20Card" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Exam Hall Tickets &amp; City Intimation</a></li>
+                        <li><a href="/category/Results" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Declared Results &amp; Merit Lists</a></li>
+                        <li><a href="/category/Answer%20Key" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Official Answer Keys</a></li>
+                    </ul>
+                </div>
+
+                <!-- State Recruitments -->
+                <div>
+                    <h4 class="text-white font-heading font-bold text-sm mb-3.5 flex items-center gap-2">
+                        <i class="fa-solid fa-map-pin text-amber-400"></i> State Portals
+                    </h4>
+                    <div class="flex flex-wrap gap-1.5 text-xs">
+                        <a href="/search?state=Rajasthan" class="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:text-white px-2.5 py-1 rounded-lg transition">Rajasthan Jobs</a>
+                        <a href="/search?state=Uttar+Pradesh" class="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:text-white px-2.5 py-1 rounded-lg transition">UPSSSC / UP Police</a>
+                        <a href="/search?state=Bihar" class="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:text-white px-2.5 py-1 rounded-lg transition">Bihar BPSC / BSSC</a>
+                        <a href="/search?state=Madhya+Pradesh" class="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:text-white px-2.5 py-1 rounded-lg transition">MP ESB / MPPSC</a>
+                        <a href="/search?state=Delhi" class="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:text-white px-2.5 py-1 rounded-lg transition">Delhi DSSSB</a>
+                        <a href="/search?state=Haryana" class="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:text-white px-2.5 py-1 rounded-lg transition">Haryana HSSC</a>
+                    </div>
+                </div>
+
+                <!-- Legal & Compliance -->
+                <div>
+                    <h4 class="text-white font-heading font-bold text-sm mb-3.5 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-check text-emerald-400"></i> Trust &amp; Transparency
+                    </h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/about" class="hover:text-cyan-400 transition">About SarkariNexus 360</a></li>
+                        <li><a href="/privacy-policy" class="hover:text-cyan-400 transition">Privacy Policy</a></li>
+                        <li><a href="/disclaimer" class="hover:text-cyan-400 transition">Disclaimer &amp; Official Verification</a></li>
+                        <li><a href="/contact" class="hover:text-cyan-400 transition">Contact &amp; Support Team</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="border-t border-slate-800/80 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+                <p>&copy; 2026 <strong class="text-slate-300">SarkariNexus 360™</strong>. All Rights Reserved. Engineered for Speed and Accuracy.</p>
+                <p class="flex items-center gap-2">
+                    <span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> 100% Direct Official Government Portals</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
