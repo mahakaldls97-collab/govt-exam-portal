@@ -72,12 +72,13 @@ def init_db():
         is_auto_synced INTEGER DEFAULT 0,
         source_url TEXT DEFAULT '',
         state TEXT DEFAULT 'All India',
+        content_html TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
     
-    # Try adding is_auto_synced, source_url, and state columns if existing table doesn't have them
+    # Try adding is_auto_synced, source_url, state, and content_html columns if existing table doesn't have them
     try:
         cursor.execute("ALTER TABLE exams ADD COLUMN is_auto_synced INTEGER DEFAULT 0")
     except Exception:
@@ -88,6 +89,10 @@ def init_db():
         pass
     try:
         cursor.execute("ALTER TABLE exams ADD COLUMN state TEXT DEFAULT 'All India'")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN content_html TEXT DEFAULT ''")
     except Exception:
         pass
     
@@ -243,7 +248,7 @@ def create_exam(data):
         'age_relaxation', 'eligibility_criteria', 'selection_process', 'syllabus_summary',
         'how_to_apply', 'link_apply_online', 'link_notification_pdf', 'link_admit_card',
         'link_answer_key', 'link_result', 'link_official_website', 'link_previous_papers',
-        'meta_title', 'meta_description', 'keywords', 'is_featured', 'is_auto_synced', 'source_url', 'state'
+        'meta_title', 'meta_description', 'keywords', 'is_featured', 'is_auto_synced', 'source_url', 'state', 'content_html'
     ]
     
     if not data.get('state'):
@@ -292,7 +297,7 @@ def update_exam(exam_id, data):
         'age_relaxation', 'eligibility_criteria', 'selection_process', 'syllabus_summary',
         'how_to_apply', 'link_apply_online', 'link_notification_pdf', 'link_admit_card',
         'link_answer_key', 'link_result', 'link_official_website', 'link_previous_papers',
-        'meta_title', 'meta_description', 'keywords', 'is_featured', 'state'
+        'meta_title', 'meta_description', 'keywords', 'is_featured', 'state', 'content_html'
     ]
     
     status = data.get('status', 'Applications Open')

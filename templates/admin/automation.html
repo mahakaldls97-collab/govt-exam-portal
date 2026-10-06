@@ -22,11 +22,17 @@
             </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+            <form action="/portal-boss-secure-2026/sync-studygovthelp" method="POST">
+                <button type="submit" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black text-xs sm:text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 transition flex items-center gap-2 transform active:scale-98">
+                    <i class="fa-solid fa-graduation-cap text-yellow-300"></i>
+                    <span>⚡ Sync StudyGovtHelp (studygovthelp.in)</span>
+                </button>
+            </form>
             <form action="/portal-boss-secure-2026/auto-fetch" method="POST">
-                <button type="submit" class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-xs sm:text-sm px-6 py-3.5 rounded-2xl shadow-lg shadow-orange-500/25 transition flex items-center gap-2 transform active:scale-98">
+                <button type="submit" class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-xs sm:text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-orange-500/25 transition flex items-center gap-2 transform active:scale-98">
                     <i class="fa-solid fa-bolt text-yellow-200"></i>
-                    <span>⚡ Fetch Latest Vacancies Now</span>
+                    <span>⚡ Sync All Feeds & Portals</span>
                 </button>
             </form>
             <a href="/portal-boss-secure-2026/logout" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm px-4 py-3.5 rounded-2xl shadow-md transition flex items-center gap-2 border border-rose-500" title="Admin Logout">
@@ -87,6 +93,16 @@
         </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div class="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 flex items-center justify-between shadow-xs">
+                <div>
+                    <span class="font-bold text-blue-950 block">StudyGovtHelp</span>
+                    <span class="text-[11px] text-blue-700">studygovthelp.in</span>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span> Live REST API
+                </span>
+            </div>
+
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                 <div>
                     <span class="font-bold text-slate-800 block">SSC (Staff Selection)</span>

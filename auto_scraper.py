@@ -178,6 +178,16 @@ def detect_state(title: str, text: str = ""):
         'default_board': 'Central Government / All India'
     }
 
+def detect_status(title: str) -> str:
+    title_lower = title.lower()
+    if any(k in title_lower for k in ['admit card', 'exam city', 'hall ticket', 'city intimation', 'city slip', 'exam schedule']):
+        return 'Admit Card'
+    elif any(k in title_lower for k in ['result declared', 'score card', 'answer key', 'result out', 'merit list']):
+        return 'Result / Answer Key'
+    elif any(k in title_lower for k in ['upcoming', 'calendar', 'expected']):
+        return 'Upcoming Notification'
+    return 'Applications Open'
+
 def detect_category(title: str, board: str) -> str:
     combined = f"{title} {board}".lower()
     
@@ -265,6 +275,7 @@ def fetch_and_sync_vacancies():
                 if exam_exists(slug=slug, title=title, source_url=source_link):
                     continue
                     
+                detected_status = detect_status(title)
                 exam_record = {
                     'title': title,
                     'slug': slug,
@@ -272,7 +283,7 @@ def fetch_and_sync_vacancies():
                     'board_name': state_info['default_board'],
                     'total_vacancies': 'Check Official Notification',
                     'short_description': f"Official recruitment announcement for {title} under {state_info['default_board']} ({state}). Candidates can apply through the official government portal.",
-                    'status': 'Applications Open',
+                    'status': detected_status,
                     'notification_date': datetime.now().strftime('%d %B %Y'),
                     'apply_start_date': 'Check Official Portal',
                     'apply_last_date': 'Check Official Portal',

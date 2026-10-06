@@ -1,328 +1,139 @@
 <!DOCTYPE html>
-<html lang="hi" class="h-full bg-slate-50">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- SEO Meta Tags -->
-    <title>{% block title %}Sarkari Exam Portal 2026 - Latest Govt Jobs, Admit Card, Results & Syllabus{% endblock %}</title>
-    <meta name="description" content="{% block meta_description %}Get all Government Exam notifications, CTET 2026, SSC CGL, UPSC, Railway NTPC, REET, Banking admit cards, results, syllabus, and direct official apply online links.{% endblock %}">
-    <meta name="keywords" content="{% block keywords %}sarkari result, ctet 2026, ssc cgl 2026, govt jobs 2026, admit card, exam date, result, syllabus, upsc 2026, railway ntpc{% endblock %}">
-    <meta name="author" content="Govt Exam Information Portal">
-    <link rel="canonical" href="{% block canonical_url %}http://localhost:8000/{% endblock %}">
-    
-    <!-- OpenGraph / Social Media -->
-    <meta property="og:title" content="{% block og_title %}Sarkari Exam Portal 2026{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Direct official links for government exams, notifications, admit card, result and syllabus.{% endblock %}">
-    <meta property="og:type" content="website">
-    <meta name="robots" content="index, follow">
-    
-    <!-- Google AdSense Official Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3194593974955223"
-     crossorigin="anonymous"></script>
-
-    <!-- JSON-LD Structured Data Block -->
-    {% block structured_data %}
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Govt Exam Information Portal",
-      "url": "http://localhost:8000/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "http://localhost:8000/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
-    {% endblock %}
-
-    <!-- Tailwind CSS CDN & Icons -->
+    <title>{% block title %}Sarkari Result™ 2026 - Government Jobs, Admit Card, Results{% endblock %}</title>
+    <meta name="description" content="Sarkari Result 2026 - Latest Government Jobs, Online Form, Admit Card, Answer Key, Results.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', '"Noto Sans Devanagari"', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        @keyframes ticker {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-50%, 0, 0); }
-        }
-        .animate-ticker {
-            display: inline-flex;
-            white-space: nowrap;
-            animation: ticker 28s linear infinite;
-        }
-        .animate-ticker:hover {
-            animation-play-state: paused;
+        *{font-family:'Inter','Noto Sans Devanagari',Arial,sans-serif}
+        body{background:#f4f4f8}
+        .sr-header{background:linear-gradient(135deg,#8B0000 0%,#6B0000 50%,#4A0000 100%)}
+        .sr-nav{background:linear-gradient(90deg,#1a1a2e 0%,#16213e 100%)}
+        .sr-nav a{transition:all .2s ease}
+        .sr-nav a:hover{background:rgba(255,255,255,.1);color:#fbbf24}
+        .sr-nav a.active{background:rgba(255,255,255,.15);color:#fbbf24;border-bottom:2px solid #fbbf24}
+        #india-map-container{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;overflow:hidden}
+        .main-content{position:relative;z-index:1}
+        .map-state-badge{position:fixed;bottom:20px;left:20px;z-index:50;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);color:#fff;padding:8px 16px;border-radius:12px;border:2px solid #fbbf24;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;transition:all .3s ease;box-shadow:0 4px 15px rgba(0,0,0,.3)}
+        .map-state-badge.hidden{display:none}
+        .map-state-badge .badge-content{display:flex;align-items:center;gap:8px}
+        .map-state-badge .badge-reset{background:#fbbf24;color:#000;border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-weight:bold;font-size:14px;pointer-events:auto}
+        .map-state-badge .badge-reset:hover{background:#f59e0b}
+        .toast-notification{position:fixed;top:80px;right:20px;z-index:9999;padding:14px 24px;border-radius:12px;font-weight:600;font-size:14px;color:#fff;opacity:0;transform:translateX(100px);transition:all .4s ease;box-shadow:0 8px 25px rgba(0,0,0,.2)}
+        .toast-notification.show{opacity:1;transform:translateX(0)}
+        .toast-success{background:linear-gradient(135deg,#059669,#10b981)}
+        .toast-error{background:linear-gradient(135deg,#dc2626,#ef4444)}
+        .sync-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600}
+        .sync-dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:pulse-dot 2s infinite}
+        @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+        .section-header{background:linear-gradient(135deg,#1e3a5f 0%,#1a1a2e 100%);color:#fff;padding:10px 16px;border-radius:8px 8px 0 0;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+        .section-body{background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;padding:0}
+        .section-body ul{list-style:none;padding:0;margin:0}
+        .section-body ul li{border-bottom:1px solid #f3f4f6}
+        .section-body ul li:last-child{border-bottom:none}
+        .section-body ul li a{display:block;padding:10px 14px;color:#1e40af;text-decoration:none;font-size:13.5px;font-weight:500;line-height:1.4;transition:all .15s ease}
+        .section-body ul li a:hover{background:#eff6ff;color:#1d4ed8;padding-left:18px}
+        .view-more-btn{display:block;text-align:right;padding:8px 14px;background:#f8fafc;border-top:1px solid #e5e7eb;border-radius:0 0 8px 8px}
+        .view-more-btn a{color:#fff;background:#1b78e2;padding:5px 16px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none;display:inline-block;transition:all .2s}
+        .view-more-btn a:hover{background:#1557b0}
+        .trending-box{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;text-align:center;font-size:13px;font-weight:600;transition:all .2s ease;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+        .trending-box:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1);border-color:#3b82f6}
+        .trending-box a{color:#1e40af;text-decoration:none}
+        .trending-box a:hover{text-decoration:underline}
+        .state-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;transition:all .2s ease;text-decoration:none}
+        .state-pill:hover,.state-pill.active{background:#1e40af;color:#fff;border-color:#1e40af}
+        @media(max-width:768px){
+            .sr-nav-links{display:none}
+            .sr-nav-links.open{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:#1a1a2e;z-index:100;padding:8px 0}
+            .sr-nav-links.open a{padding:10px 20px}
+            #india-map-container{display:none}
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
-
-    <!-- Top Breaking News / Marquee Bar -->
-    <div class="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white text-xs sm:text-sm font-medium py-2 px-4 shadow-sm overflow-hidden flex items-center">
-        <div class="flex items-center gap-2 bg-black/25 px-2.5 py-0.5 rounded-full mr-3 shrink-0 uppercase tracking-wider font-bold text-[11px]">
-            <span class="w-2 h-2 rounded-full bg-yellow-300 animate-ping"></span>
-            <span>Live Alerts</span>
-        </div>
-        <div class="overflow-hidden w-full relative">
-            <div class="animate-ticker space-x-8 text-white/95">
-                <span>🔥 <strong>Rajasthan CET 2026:</strong> 12th & Graduation Level Form & Exam Dates Live</span>
-                <span>⚡ <strong>Haryana CET 2026:</strong> Group C & D One Time Registration Active</span>
-                <span>📢 <strong>CTET 2026:</strong> Central Teacher Eligibility Test Online Application at ctet.nic.in</span>
-                <span>👮 <strong>SSC GD Constable:</strong> 39,481+ Posts notification at ssc.gov.in</span>
-                <span>🚂 <strong>Railway RRB ALP & Technician:</strong> 33,000+ Posts CEN Recruitment Live</span>
-                <span>🎯 <strong>UPSSSC PET 2026:</strong> Preliminary Eligibility Test Details Updated</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Navigation Header -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16 sm:h-20">
-                
-                <!-- Logo & Brand Title -->
+<body>
+    <div id="india-map-container"></div>
+    <div class="main-content">
+        <header class="sr-header text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <a href="/" class="flex items-center gap-3 group">
-                        <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform duration-200">
-                            <i class="fa-solid fa-graduation-cap text-2xl"></i>
-                        </div>
-                        <div>
-                            <span class="block text-xl sm:text-2xl font-black tracking-tight text-slate-900 leading-tight">
-                                Sarkari<span class="text-blue-600">Exam</span><span class="text-amber-500 text-sm align-super font-bold ml-0.5">HUB</span>
-                            </span>
-                            <span class="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest -mt-0.5">
-                                Official Govt Info Portal
-                            </span>
-                        </div>
-                    </a>
+                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-landmark text-xl text-amber-300"></i>
+                    </div>
+                    <div>
+                        <a href="/" class="text-2xl sm:text-3xl font-black tracking-tight text-white hover:text-amber-200 transition">Sarkari Result™</a>
+                        <p class="text-[11px] text-red-200 font-medium -mt-0.5">SarkariResult Portal — Auto-Synced from Official Sources</p>
+                    </div>
                 </div>
-
-                <!-- Desktop Search Bar -->
-                <div class="hidden md:flex flex-1 max-w-md mx-8">
-                    <form action="/search" method="GET" class="w-full relative">
-                        <div class="relative">
-                            <input 
-                                type="text" 
-                                name="q" 
-                                placeholder="Search exams e.g. Rajasthan CET, CTET, SSC GD, Railway..." 
-                                value="{{ search_query if search_query else '' }}"
-                                class="w-full bg-slate-100/90 border border-slate-300/80 rounded-full py-2.5 pl-11 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner"
-                                required
-                            >
-                            <span class="absolute left-3.5 top-2.5 text-slate-400">
-                                <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                            </span>
-                            <button type="submit" class="absolute right-2 top-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-1.5 w-7 h-7 flex items-center justify-center text-xs shadow transition">
-                                <i class="fa-solid fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </form>
+                <div class="hidden md:flex items-center gap-3">
+                    <div class="sync-chip"><span class="sync-dot"></span><span>Live Sync Active</span></div>
+                    <button id="sync-btn" onclick="triggerSync()" class="bg-amber-500 hover:bg-amber-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt"></i> Sync Now
+                    </button>
                 </div>
-
-                <!-- Nav Links & Social Groups -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 transition shadow-xs">
-                        <i class="fa-brands fa-telegram text-sky-500 text-sm"></i>
-                        <span>Telegram Alerts</span>
-                    </a>
-                    <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-xs">
-                        <i class="fa-brands fa-whatsapp text-emerald-500 text-sm"></i>
-                        <span>WhatsApp Group</span>
-                    </a>
-                </div>
-
             </div>
-        </div>
-
-        <!-- Category Navbar Strip -->
-        <nav class="bg-slate-900 text-white border-t border-slate-800">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between overflow-x-auto py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap scrollbar-none gap-4 sm:gap-6">
-                    <a href="/" class="hover:text-amber-400 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-house text-amber-400"></i> Home
-                    </a>
-                    <a href="/category/State" class="hover:text-amber-400 transition text-amber-300 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-file-lines text-amber-400"></i> CET & State Exams
-                    </a>
-                    <a href="/category/Teaching" class="hover:text-amber-400 transition">Teaching (CTET / REET)</a>
-                    <a href="/category/SSC" class="hover:text-amber-400 transition">SSC (CGL / CHSL / GD)</a>
-                    <a href="/category/Railway" class="hover:text-amber-400 transition">Railway (ALP / Tech / NTPC)</a>
-                    <a href="/category/Police" class="hover:text-amber-400 transition text-rose-400 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-person-military-pointing text-rose-400"></i> Police & Defense
-                    </a>
-                    <a href="/category/Banking" class="hover:text-amber-400 transition">Banking (IBPS / SBI)</a>
-                    <a href="/category/UPSC" class="hover:text-amber-400 transition">UPSC Civil Services</a>
-                    <a href="/category/Others" class="hover:text-amber-400 transition text-emerald-300 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-layer-group text-emerald-400"></i> Other Exams (अन्य भर्तियां)
-                    </a>
-                    <a href="/search?status=Admit+Card" class="hover:text-amber-400 transition text-amber-300">
-                        <i class="fa-solid fa-ticket"></i> Admit Cards
-                    </a>
-                    <a href="/disclaimer" class="hover:text-amber-400 transition text-slate-400">
-                        Disclaimer
-                    </a>
+        </header>
+        <nav class="sr-nav shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
+                <div class="sr-nav-links flex items-center gap-0.5 overflow-x-auto" id="nav-links">
+                    <a href="/" class="px-3 py-2.5 text-white text-[13px] font-semibold rounded-t whitespace-nowrap {% if request.url.path == '/' %}active{% endif %}"><i class="fa-solid fa-house mr-1"></i>Home</a>
+                    <a href="/category/Latest%20Jobs" class="px-3 py-2.5 text-gray-300 text-[13px] font-semibold rounded-t whitespace-nowrap">Latest Jobs</a>
+                    <a href="/category/Admit%20Card" class="px-3 py-2.5 text-gray-300 text-[13px] font-semibold rounded-t whitespace-nowrap">Admit Card</a>
+                    <a href="/category/Results" class="px-3 py-2.5 text-gray-300 text-[13px] font-semibold rounded-t whitespace-nowrap">Results</a>
+                    <a href="/category/Answer%20Key" class="px-3 py-2.5 text-gray-300 text-[13px] font-semibold rounded-t whitespace-nowrap">Answer Key</a>
+                    <a href="/category/Teaching" class="px-3 py-2.5 text-gray-300 text-[13px] font-semibold rounded-t whitespace-nowrap">Syllabus</a>
+                    <a href="/category/State" class="px-3 py-2.5 text-gray-300 text-[13px] font-semibold rounded-t whitespace-nowrap">Admission</a>
+                    <a href="/search?q=" class="px-3 py-2.5 text-gray-300 text-[13px] font-semibold rounded-t whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Search</a>
                 </div>
+                <button class="md:hidden text-white text-xl p-2" onclick="document.getElementById('nav-links').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
             </div>
         </nav>
-    </header>
-
-    <!-- Mobile Search Bar (Only visible on small screens) -->
-    <div class="md:hidden bg-slate-100 p-3 border-b border-slate-200">
-        <form action="/search" method="GET" class="w-full relative">
-            <input 
-                type="text" 
-                name="q" 
-                placeholder="Search CTET 2026, SSC CGL, RRB..." 
-                value="{{ search_query if search_query else '' }}"
-                class="w-full bg-white border border-slate-300 rounded-full py-2 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                required
-            >
-            <span class="absolute left-3 top-2.5 text-slate-400">
-                <i class="fa-solid fa-magnifying-glass text-sm"></i>
-            </span>
-            <button type="submit" class="absolute right-2 top-1.5 bg-blue-600 text-white rounded-full p-1.5 w-7 h-7 flex items-center justify-center text-xs">
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </form>
-    </div>
-
-    <!-- Official Non-Govt Disclaimer Notice -->
-    <div class="bg-amber-50 border-y border-amber-200/80 px-4 py-2 text-[11px] sm:text-xs text-amber-900 flex items-center justify-center text-center">
-        <div class="max-w-5xl mx-auto flex items-center justify-center gap-2">
-            <i class="fa-solid fa-circle-info text-amber-600 shrink-0 text-sm"></i>
-            <span>
-                <strong>सूचना / Disclaimer:</strong> यह वेबसाइट केवल परीक्षार्थियों की सुविधा के लिए सूचनात्मक माध्यम है। हम किसी सरकारी संस्था से संबद्ध नहीं हैं। सभी 'Apply Online', 'Admit Card' व 'Notification' बटन सीधे संबंधित आधिकारिक सरकारी वेबसाइट्स पर ले जाते हैं।
-            </span>
-        </div>
-    </div>
-
-    <!-- Main Content Area -->
-    <main class="flex-grow">
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 mt-12 text-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                
-                <!-- Col 1: About & Aggregator Role -->
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2 text-white font-black text-xl">
-                        <i class="fa-solid fa-graduation-cap text-blue-500"></i>
-                        <span>Sarkari<span class="text-blue-500">Exam</span>HUB</span>
+        <main class="min-h-screen">{% block content %}{% endblock %}</main>
+        <footer class="bg-gray-900 text-gray-400 mt-10">
+            <div class="max-w-7xl mx-auto px-4 py-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-white font-bold text-lg mb-3">Sarkari Result™</h3>
+                        <p class="text-sm leading-relaxed">Your trusted source for latest government job notifications, exam admit cards, answer keys, and results. Auto-synced from sarkariresult.com.cm every 30 minutes.</p>
                     </div>
-                    <p class="text-xs leading-relaxed text-slate-400">
-                        भारत के सभी प्रमुख प्रतियोगी परीक्षाओं जैसे CTET 2026, SSC, UPSC, Railway, REET, Banking आदि की प्रामाणिक जानकारी और आधिकारिक लिंक्स को एक ही मंच पर उपलब्ध कराने वाला विश्वसनीय पोर्टल।
-                    </p>
-                    <div class="pt-2 flex gap-3 text-lg">
-                        <a href="https://t.me" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-sky-500 hover:text-white flex items-center justify-center transition">
-                            <i class="fa-brands fa-telegram"></i>
-                        </a>
-                        <a href="https://whatsapp.com" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition">
-                            <i class="fa-brands fa-whatsapp"></i>
-                        </a>
-                        <a href="https://youtube.com" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-red-500 hover:text-white flex items-center justify-center transition">
-                            <i class="fa-brands fa-youtube"></i>
-                        </a>
+                    <div>
+                        <h3 class="text-white font-bold text-lg mb-3">Quick Links</h3>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <a href="/" class="hover:text-white transition">Home</a>
+                            <a href="/category/Latest%20Jobs" class="hover:text-white transition">Latest Jobs</a>
+                            <a href="/category/Admit%20Card" class="hover:text-white transition">Admit Card</a>
+                            <a href="/category/Results" class="hover:text-white transition">Results</a>
+                            <a href="/about" class="hover:text-white transition">About Us</a>
+                            <a href="/contact" class="hover:text-white transition">Contact Us</a>
+                            <a href="/privacy-policy" class="hover:text-white transition">Privacy Policy</a>
+                            <a href="/disclaimer" class="hover:text-white transition">Disclaimer</a>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Col 2: Top Exams -->
-                <div>
-                    <h3 class="text-white font-bold text-sm tracking-wider uppercase mb-3">लोकप्रिय परीक्षाएं (Top Exams)</h3>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="/exam/ctet-2026" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> CTET 2026 Notification</a></li>
-                        <li><a href="/exam/ssc-cgl-2026" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> SSC CGL 2026 Recruitment</a></li>
-                        <li><a href="/exam/upsc-civil-services-2026" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> UPSC IAS / IFS 2026</a></li>
-                        <li><a href="/exam/rrb-ntpc-2026" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> Railway RRB NTPC 2026</a></li>
-                        <li><a href="/exam/reet-2026" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> REET 2026 Rajasthan Teacher</a></li>
-                    </ul>
-                </div>
-
-                <!-- Col 3: Quick Categories -->
-                <div>
-                    <h3 class="text-white font-bold text-sm tracking-wider uppercase mb-3">कैटेगरी (Categories)</h3>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="/category/Teaching" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> Teaching Exams (TGT/PGT/TET)</a></li>
-                        <li><a href="/category/SSC" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> SSC Exams (CGL, CHSL, GD)</a></li>
-                        <li><a href="/category/Railway" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> Railway Recruitment (RRB/RRC)</a></li>
-                        <li><a href="/category/Banking" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> Banking (IBPS, SBI, RBI)</a></li>
-                        <li><a href="/category/Police" class="hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i> Police & Defense Jobs</a></li>
-                    </ul>
-                </div>
-
-                <!-- Col 4: Important Official Portals & Disclaimer -->
-                <div>
-                    <h3 class="text-white font-bold text-sm tracking-wider uppercase mb-3">महत्वपूर्ण आधिकारिक वेबसाइट्स</h3>
-                    <ul class="space-y-1.5 text-xs">
-                        <li><a href="https://ctet.nic.in" target="_blank" rel="nofollow noopener" class="hover:text-white transition flex items-center justify-between"><span>CTET Official</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a></li>
-                        <li><a href="https://ssc.gov.in" target="_blank" rel="nofollow noopener" class="hover:text-white transition flex items-center justify-between"><span>SSC Official</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a></li>
-                        <li><a href="https://upsc.gov.in" target="_blank" rel="nofollow noopener" class="hover:text-white transition flex items-center justify-between"><span>UPSC Official</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a></li>
-                        <li><a href="https://rrbcdg.gov.in" target="_blank" rel="nofollow noopener" class="hover:text-white transition flex items-center justify-between"><span>Railway RRB</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a></li>
-                        <li><a href="https://ibps.in" target="_blank" rel="nofollow noopener" class="hover:text-white transition flex items-center justify-between"><span>IBPS Official</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a></li>
-                    </ul>
-                    <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 space-y-1">
-                        <div class="font-bold text-slate-300 text-[11px] uppercase tracking-wider mb-1">नीति व संपर्क</div>
-                        <div class="flex flex-col space-y-1">
-                            <a href="/about-us" class="hover:text-blue-400 transition">About Us (हमारे बारे में)</a>
-                            <a href="/contact-us" class="hover:text-blue-400 transition">Contact Us (संपर्क करें)</a>
-                            <a href="/privacy-policy" class="hover:text-blue-400 transition">Privacy Policy (गोपनीयता नीति)</a>
-                            <a href="/terms" class="hover:text-blue-400 transition">Terms & Conditions (नियम व शर्तें)</a>
-                            <a href="/disclaimer" class="hover:text-blue-400 transition">Disclaimer (अस्वीकरण)</a>
+                    <div>
+                        <h3 class="text-white font-bold text-lg mb-3">State Wise Exams</h3>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <a href="/search?q=Rajasthan" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">Rajasthan</a>
+                            <a href="/search?q=Uttar+Pradesh" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">Uttar Pradesh</a>
+                            <a href="/search?q=Bihar" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">Bihar</a>
+                            <a href="/search?q=MP" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">Madhya Pradesh</a>
+                            <a href="/search?q=Delhi" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">Delhi</a>
+                            <a href="/search?q=Haryana" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">Haryana</a>
+                            <a href="/search?q=SSC" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">SSC</a>
+                            <a href="/search?q=Railway" class="bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 transition">Railway</a>
                         </div>
                     </div>
                 </div>
-
-            </div>
-
-            <!-- Bottom Legal Strip -->
-            <div class="mt-8 pt-6 border-t border-slate-800 text-center text-xs text-slate-500 space-y-3">
-                <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-xs text-slate-400 font-medium">
-                    <a href="/about-us" class="hover:text-white transition">About Us</a>
-                    <span class="text-slate-700">•</span>
-                    <a href="/contact-us" class="hover:text-white transition">Contact Us</a>
-                    <span class="text-slate-700">•</span>
-                    <a href="/privacy-policy" class="hover:text-white transition">Privacy Policy</a>
-                    <span class="text-slate-700">•</span>
-                    <a href="/terms" class="hover:text-white transition">Terms & Conditions</a>
-                    <span class="text-slate-700">•</span>
-                    <a href="/disclaimer" class="hover:text-white transition">Disclaimer</a>
+                <div class="border-t border-gray-800 mt-6 pt-6 text-center text-xs">
+                    <p>&copy; 2024-2026 Sarkari Result™ Portal. Auto-synced from official sources.</p>
+                    <p class="mt-1 text-gray-500">Powered by FastAPI + India Map Engine | <i class="fa-solid fa-shield-halved text-emerald-500"></i> 100% Verified Official Links</p>
                 </div>
-                <p>© 2026 SarkariExamHub. All information provided for educational purposes. All logos and trademarks belong to their respective government boards.</p>
             </div>
-        </div>
-    </footer>
-
+        </footer>
+    </div>
+    <script src="/static/js/india_map.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -621,6 +621,19 @@
     </div>
     {% endif %}
 
+    <!-- Full Detailed Notification & Post Breakdown (Tables, Qualification, Syllabus, etc.) -->
+    {% if exam.content_html %}
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
+            <i class="fa-solid fa-file-lines text-indigo-600"></i>
+            विस्तृत अधिसूचना व पद विवरण (Detailed Vacancy Tables & Information)
+        </h2>
+        <div class="prose prose-sm max-w-none text-slate-800 leading-relaxed overflow-x-auto">
+            {{ exam.content_html | safe }}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- FAQs Section -->
     {% if exam.faqs and exam.faqs|length > 0 %}
     <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
@@ -685,4 +698,17 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const examState = "{{ exam.state or 'All India' }}";
+    if (examState && examState !== 'All India' && window.indiaMap) {
+        setTimeout(() => {
+            window.indiaMap.highlightState(examState);
+        }, 300);
+    }
+});
+</script>
 {% endblock %}

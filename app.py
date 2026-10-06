@@ -18,6 +18,8 @@ from email_service import send_password_reset_email
 from seed_data import seed
 from auto_scraper import fetch_and_sync_vacancies
 from sarkariexam_scraper import fetch_and_sync_sarkariexam
+from sarkariresult_crawler import sync_from_sarkariresult
+from studygovthelp_scraper import sync_from_studygovthelp
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -26,7 +28,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 os.makedirs(STATIC_DIR, exist_ok=True)
 os.makedirs(TEMPLATES_DIR, exist_ok=True)
 
-app = FastAPI(title="Govt Exam Information Portal", version="1.1.0")
+app = FastAPI(title="Sarkari Result Portal", version="2.0.0")
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -36,6 +38,16 @@ async def background_vacancy_crawler():
     # Wait 10 seconds after server starts before first auto-sync
     await asyncio.sleep(10)
     while True:
+        # Primary 1: StudyGovtHelp.in automated crawler
+        try:
+            sync_from_studygovthelp(pages=2, per_page=15)
+        except Exception as e:
+            print(f"[STUDYGOVTHELP CRAWLER ERROR] {e}")
+        # Primary 2: SarkariResult.com.cm crawler
+        try:
+            sync_from_sarkariresult(limit_deep_scrape=15)
+        except Exception as e:
+            print(f"[SARKARIRESULT CRAWLER ERROR] {e}")
         try:
             fetch_and_sync_vacancies()
         except Exception as e:
@@ -50,14 +62,24 @@ async def background_vacancy_crawler():
             print(f"[AUTO-LIFECYCLE] Moved to Admit Card: {res.get('moved_to_admit', 0)}, Moved to Result: {res.get('moved_to_result', 0)}, Archived: {res.get('archived', 0)}")
         except Exception as e:
             print(f"[CLEANUP ERROR] {e}")
-        # Run every 1 hour (3600 seconds)
-        await asyncio.sleep(3600)
+        # Run every 30 minutes (1800 seconds)
+        await asyncio.sleep(1800)
 
 @app.on_event("startup")
 async def on_startup():
     init_db()
     init_admin()
     seed()
+    # Run initial studygovthelp sync
+    try:
+        sync_from_studygovthelp(pages=2, per_page=15)
+    except Exception as e:
+        print(f"[STARTUP STUDYGOVTHELP SYNC ERROR] {e}")
+    # Run initial sarkariresult sync
+    try:
+        sync_from_sarkariresult(limit_deep_scrape=10)
+    except Exception as e:
+        print(f"[STARTUP SYNC ERROR] {e}")
     # Start non-blocking background worker
     asyncio.create_task(background_vacancy_crawler())
 
@@ -70,14 +92,41 @@ def get_current_admin(request: Request):
 
 # ----------------- PUBLIC ROUTES ----------------- #
 
+# API: Manual sync from studygovthelp.in
+@app.post("/api/sync/studygovthelp")
+@app.get("/api/sync/studygovthelp")
+async def api_sync_studygovthelp(pages: int = 2):
+    try:
+        result = sync_from_studygovthelp(pages=pages, per_page=20)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
+# API: Manual sync from sarkariresult.com.cm
+@app.post("/api/sync/sarkariresult")
+@app.get("/api/sync/sarkariresult")
+async def api_sync_sarkariresult():
+    try:
+        result = sync_from_sarkariresult(limit_deep_scrape=10)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
+# API: Get exams by state (for map interaction)
+@app.get("/api/exams-by-state")
+async def api_exams_by_state(state: str = "All India"):
+    exams = get_all_exams(limit=50)
+    filtered = [dict(e) for e in exams if e['state'] == state or state == 'all']
+    return JSONResponse(content={"state": state, "count": len(filtered), "exams": filtered[:30]})
+
 @app.get("/", response_class=HTMLResponse)
 async def home_page(request: Request):
-    # Only active, ongoing, and upcoming exams (no finished/result exams)
     active_forms_exams = get_all_exams(limit=50, status="Applications Open")
     upcoming_exams = get_all_exams(limit=50, status="Upcoming")
-    admit_cards_exams = get_all_exams(limit=50, status="Admit")
+    admit_cards_exams = get_all_exams(limit=50, status="Admit Card")
+    result_exams = get_all_exams(limit=50, status="Result")
     police_exams = get_all_exams(limit=50, category="Police")
-    all_active_exams = get_all_exams(limit=100)
+    all_active_exams = get_all_exams(limit=200)
     all_states = get_all_states()
     
     return templates.TemplateResponse(
@@ -88,6 +137,7 @@ async def home_page(request: Request):
             "active_forms_exams": active_forms_exams,
             "upcoming_exams": upcoming_exams,
             "admit_cards_exams": admit_cards_exams,
+            "result_exams": result_exams,
             "police_exams": police_exams,
             "all_states": all_states,
         }
@@ -479,8 +529,18 @@ async def admin_manual_auto_fetch(request: Request):
     if not admin:
         return RedirectResponse(url=f"{SECRET_ADMIN_PATH}/login", status_code=status.HTTP_302_FOUND)
         
+    res_study = sync_from_studygovthelp(pages=3, per_page=20)
     res = fetch_and_sync_vacancies()
-    msg = f"Auto-Sync Complete! Checked official sources: {res['items_found']} notices found, {res['items_added']} new vacancies automatically added."
+    msg = f"Auto-Sync Complete! studygovthelp.in ({res_study['items_added']} added) + Pan-India Feeds ({res['items_added']} added)."
+    return RedirectResponse(url=f"{SECRET_ADMIN_PATH}/automation?msg={msg}", status_code=status.HTTP_302_FOUND)
+
+@app.post(f"{SECRET_ADMIN_PATH}/sync-studygovthelp")
+async def admin_sync_studygovthelp(request: Request):
+    admin = get_current_admin(request)
+    if not admin:
+        return RedirectResponse(url=f"{SECRET_ADMIN_PATH}/login", status_code=status.HTTP_302_FOUND)
+    res = sync_from_studygovthelp(pages=3, per_page=20)
+    msg = f"studygovthelp.in Sync Complete! {res['items_found']} posts examined, {res['items_added']} new vacancies added."
     return RedirectResponse(url=f"{SECRET_ADMIN_PATH}/automation?msg={msg}", status_code=status.HTTP_302_FOUND)
 
 @app.get(f"{SECRET_ADMIN_PATH}/exams/new", response_class=HTMLResponse)
