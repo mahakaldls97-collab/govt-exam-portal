@@ -401,7 +401,7 @@ def auto_cleanup_expired_exams():
     Stage 2: When apply_last_date has passed -> Moves to 'Admit Card / Exam' (badge: 'blue')
              so candidates can still access Admit Card and Exam details!
     Stage 3: When exam_date has passed -> Moves to 'Result / Answer Key' (badge: 'amber').
-    Stage 4: When recruitment is completely over (> 60 days after result OR > 180 days old) ->
+    Stage 4: When recruitment is completely over (> 30 days after result OR > 90 days old) ->
              Status becomes 'Archived' (hidden from active listings).
     """
     conn = get_db()
@@ -478,8 +478,9 @@ def auto_cleanup_expired_exams():
             except Exception:
                 pass
 
-        # Stage 4: Archive if result declared > 60 days ago OR created > 180 days ago with apply_passed
-        if (result_passed and days_since_result > 60) or (apply_passed and days_old > 180):
+        # Stage 4: Archive if result declared > 30 days ago OR created > 90 days ago with apply_passed
+        # But NEVER archive if the exam date is in the future!
+        if (result_passed and days_since_result > 30) or (apply_passed and days_old > 90 and not (exam_dt and exam_dt >= now)):
             if curr_status != 'Archived':
                 cursor.execute("UPDATE exams SET status = 'Archived', badge_color = 'gray', updated_at = ? WHERE id = ?",
                                (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
@@ -504,8 +505,88 @@ def auto_cleanup_expired_exams():
     
     conn.commit()
     conn.close()
+
+    # Automatically synchronize exam dates from latest announcements
+    dates_synced = auto_propagate_exam_dates()
+
     return {
         'moved_to_admit': moved_to_admit,
         'moved_to_result': moved_to_result,
-        'archived': archived
+        'archived': archived,
+        'dates_synced': dates_synced
     }
+
+def auto_propagate_exam_dates() -> int:
+    """
+    Intelligent Auto-Date Synchronizer:
+    Automatically updates parent recruitment dates whenever new exam dates or admit card
+    announcements are discovered in the portal, so the admin NEVER has to manually update them.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    updated_count = 0
+
+    MATCH_PATTERNS = [
+        ('ctet', ['ctet']),
+        ('ssc cgl', ['ssc cgl', 'cgl 2026', 'combined graduate level']),
+        ('ssc chsl', ['ssc chsl', 'chsl 2026', '10+2']),
+        ('ssc mts', ['ssc mts', 'mts 2026', 'havaldar']),
+        ('ssc gd', ['ssc gd', 'constable gd']),
+        ('rrb ntpc', ['rrb ntpc', 'ntpc 2026', 'ntpc']),
+        ('rrb alp', ['rrb alp', 'assistant loco pilot']),
+        ('rrb technician', ['rrb technician', 'technician']),
+        ('rpf constable', ['rpf constable', 'railway protection force']),
+        ('up police constable', ['up police constable', 'uppbpb']),
+        ('rajasthan cet 12th', ['cet 12th', 'cet सीनियर सेकेंडरी', 'cet 10+2']),
+        ('rajasthan cet graduate', ['cet स्नातक', 'cet graduate']),
+        ('reet', ['reet 2026', 'reet exam']),
+        ('ibps po', ['ibps po', 'crp po']),
+        ('ibps clerk', ['ibps clerk', 'crp clerk']),
+        ('sbi clerk', ['sbi clerk', 'junior associate']),
+        ('sbi po', ['sbi po', 'probationary officer'])
+    ]
+
+    cursor.execute("""
+        SELECT id, title, exam_date, admit_card_date
+        FROM exams 
+        WHERE LOWER(exam_date) NOT IN ('as per schedule', 'check official portal', '', 'बाद में सूचित की जाएगी', 'various', 'n/a')
+              AND (exam_date LIKE '%2026%' OR exam_date LIKE '%2025%' OR exam_date LIKE '%2027%'
+                   OR exam_date LIKE '%जनवरी%' OR exam_date LIKE '%फरवरी%' OR exam_date LIKE '%मार्च%'
+                   OR exam_date LIKE '%अप्रैल%' OR exam_date LIKE '%मई%' OR exam_date LIKE '%जून%'
+                   OR exam_date LIKE '%जुलाई%' OR exam_date LIKE '%अगस्त%' OR exam_date LIKE '%सितंबर%'
+                   OR exam_date LIKE '%अक्टूबर%' OR exam_date LIKE '%नवंबर%' OR exam_date LIKE '%दिसंबर%')
+        ORDER BY id DESC LIMIT 300
+    """)
+    update_rows = cursor.fetchall()
+
+    for pattern_key, keywords in MATCH_PATTERNS:
+        latest_exam_date = None
+        for u in update_rows:
+            u_title = u['title'].lower()
+            if any(kw in u_title for kw in keywords):
+                ed = u['exam_date']
+                if ed and len(ed) < 60:
+                    latest_exam_date = ed
+                    break
+        
+        if latest_exam_date:
+            cursor.execute("SELECT id, title, exam_date, status FROM exams WHERE id <= 100")
+            for parent in cursor.fetchall():
+                p_title = parent['title'].lower()
+                if any(kw in p_title for kw in keywords):
+                    if parent['exam_date'] != latest_exam_date:
+                        cursor.execute("""
+                            UPDATE exams 
+                            SET exam_date = ?, 
+                                status = 'Admit Card / Exam',
+                                badge_color = 'blue',
+                                updated_at = ?
+                            WHERE id = ?
+                        """, (latest_exam_date, now_str, parent['id']))
+                        updated_count += 1
+                        print(f"  [AUTO-DATE SYNC] Updated {parent['title']} -> Exam Date: {latest_exam_date}")
+
+    conn.commit()
+    conn.close()
+    return updated_count

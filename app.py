@@ -33,53 +33,41 @@ app = FastAPI(title="Sarkari Result Portal", version="2.0.0")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
+ENABLE_BACKGROUND_CRAWLER = os.getenv("ENABLE_BACKGROUND_CRAWLER", "false").lower() in ("true", "1", "yes")
+
 # Background worker that automatically polls government sources and cleans expired vacancies
 async def background_vacancy_crawler():
-    # Wait 10 seconds after server starts before first auto-sync
-    await asyncio.sleep(10)
+    if not ENABLE_BACKGROUND_CRAWLER:
+        print("[BACKGROUND WORKER] Auto-crawler disabled on free tier to conserve quota and prevent suspension. Use Admin Panel or /api/sync/studygovthelp for on-demand sync.")
+        return
+    # Wait 60 seconds after server starts before first auto-sync
+    await asyncio.sleep(60)
     while True:
-        # Primary 1: StudyGovtHelp.in automated crawler
         try:
             sync_from_studygovthelp(pages=2, per_page=15)
         except Exception as e:
             print(f"[STUDYGOVTHELP CRAWLER ERROR] {e}")
-        # Primary 2: SarkariResult.com.cm crawler
         try:
             sync_from_sarkariresult(limit_deep_scrape=15)
         except Exception as e:
             print(f"[SARKARIRESULT CRAWLER ERROR] {e}")
         try:
-            fetch_and_sync_vacancies()
-        except Exception as e:
-            print(f"[BACKGROUND WORKER ERROR] Auto-sync encountered an error: {e}")
-        try:
             fetch_and_sync_sarkariexam()
         except Exception as e:
             print(f"[SARKARIEXAM CRAWLER ERROR] {e}")
-        # Auto-cleanup expired vacancies (3-stage lifecycle)
         try:
             res = auto_cleanup_expired_exams()
             print(f"[AUTO-LIFECYCLE] Moved to Admit Card: {res.get('moved_to_admit', 0)}, Moved to Result: {res.get('moved_to_result', 0)}, Archived: {res.get('archived', 0)}")
         except Exception as e:
             print(f"[CLEANUP ERROR] {e}")
-        # Run every 30 minutes (1800 seconds)
-        await asyncio.sleep(1800)
+        # Run every 6 hours (21600 seconds)
+        await asyncio.sleep(21600)
 
 @app.on_event("startup")
 async def on_startup():
     init_db()
     init_admin()
     seed()
-    # Run initial studygovthelp sync
-    try:
-        sync_from_studygovthelp(pages=2, per_page=15)
-    except Exception as e:
-        print(f"[STARTUP STUDYGOVTHELP SYNC ERROR] {e}")
-    # Run initial sarkariresult sync
-    try:
-        sync_from_sarkariresult(limit_deep_scrape=10)
-    except Exception as e:
-        print(f"[STARTUP SYNC ERROR] {e}")
     # Start non-blocking background worker
     asyncio.create_task(background_vacancy_crawler())
 

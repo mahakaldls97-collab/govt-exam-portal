@@ -187,8 +187,8 @@ def parse_studygovthelp_post(post_data: dict) -> dict:
                     if not apply_last_date:
                         apply_last_date = val
                 # Exam Date
-                elif any(k in key for k in ['exam date', 'परीक्षा तिथि', 'परीक्षा']):
-                    if not exam_date:
+                elif any(k in key for k in ['exam date', 'examination date', 'परीक्षा तिथि', 'परीक्षा तारीख', 'परीक्षा दिनांक', 'कब होगी परीक्षा', 'exam schedule']) and not any(k in key for k in ['नाम', 'name', 'pattern', 'पैटर्न', 'योजना', 'स्कीम', 'सिलेबस', 'syllabus', 'post', 'पद']):
+                    if not exam_date and len(val) < 60:
                         exam_date = val
                 # Fees
                 elif any(k in key for k in ['male ur/obc/ews', 'general', 'ur / ews', 'general/obc']):
@@ -403,6 +403,25 @@ def sync_from_studygovthelp(pages: int = 3, per_page: int = 20) -> dict:
                         conn.close()
                     except Exception as e:
                         print(f"Notice on updating existing record: {e}")
+                # Filter out non-recruitment junk articles (e.g. elections, voter list, aadhar, pure stubs)
+                t_lower = title.lower()
+                JUNK_FILTER = [
+                    'chunav', 'चुनाव', 'voter', 'वोटर', 'ballot', 'मतपत्र', 'aadhar', 'आधार',
+                    'sim number', 'सिम', 'bhatta', 'भत्ता', 'ration', 'राशन',
+                    'board 10th', 'board 12th', 'scholarship', 'छात्रवृत्ति',
+                    'sarpanch', 'सरपंच', 'वार्ड पंच'
+                ]
+                if any(k in t_lower for k in JUNK_FILTER):
+                    print(f"  [-] Skipping non-recruitment article: {title}")
+                    continue
+
+                # Skip stub articles that have neither fees nor application dates
+                fee_gen_clean = (parsed.get('fee_general') or '').lower()
+                apply_last_clean = (parsed.get('apply_last_date') or '').lower()
+                apply_start_clean = (parsed.get('apply_start_date') or '').lower()
+                if ('as per notification' in fee_gen_clean or 'check official' in fee_gen_clean) and \
+                   ('check official' in apply_last_clean or 'check official' in apply_start_clean):
+                    print(f"  [-] Skipping stub/news article with incomplete data: {title}")
                     continue
                 
                 create_exam(parsed)

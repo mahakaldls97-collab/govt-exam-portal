@@ -243,24 +243,8 @@ def sync_from_sarkariresult(limit_deep_scrape: int = 15):
                 time.sleep(0.3)
                 
             if not details:
-                # Fallback details
-                details = {
-                    'total_vacancies': 'Various Posts',
-                    'link_apply_online': source_link,
-                    'link_notification_pdf': source_link,
-                    'link_official_website': 'https://sarkariresult.com.cm/',
-                    'link_admit_card': source_link if item['status'] == 'Admit Card' else '',
-                    'link_result': source_link if item['status'] == 'Result' else '',
-                    'apply_start_date': datetime.now().strftime("%d/%m/%Y"),
-                    'apply_last_date': 'Check Notification',
-                    'fee_general': 'As per official rules',
-                    'fee_reserved': 'As per rules (Exempted)',
-                    'fee_payment_mode': 'Online',
-                    'min_age': '18 Years',
-                    'max_age': 'Post Wise',
-                    'eligibility_criteria': '10th / 12th / Graduate from recognized board / university in India.',
-                    'short_description': f"Official recruitment update for {title}. Live link directly verified."
-                }
+                # Skip items without fully verified details (never insert dummy fallback data)
+                continue
                 
             # Insert into database
             try:
