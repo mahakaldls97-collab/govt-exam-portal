@@ -106,6 +106,73 @@
         </div>
     </div>
 
+    <!-- ⚡ QUICK SMART POST BOX (DASHBOARD SHORTCUT) -->
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border-2 border-indigo-500/40 relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800/80 pb-3 mb-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-black text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-300 animate-pulse"></i>
+                    ⚡ Quick Smart Post (कच्चा टेक्स्ट पेस्ट करके 1 सेकंड में लाइव करें)
+                </h2>
+                <p class="text-xs text-slate-300 mt-1">
+                    जब भी आप जल्दी में हों, किसी भी वेबसाइट, नोटिफिकेशन या व्हाट्सएप का पूरा विवरण यहाँ पेस्ट करें। ऑटोमेशन अपने-आप <strong class="text-white">कैटेगरी (Railway, Police, SSC, Teaching आदि)</strong>, तारीखें, फीस, और सारणी बनाकर पोस्ट लाइव कर देगा!
+                </p>
+            </div>
+            <span class="text-xs bg-emerald-500/20 text-emerald-300 font-extrabold px-3.5 py-1.5 rounded-full border border-emerald-500/30 flex items-center gap-1.5 shadow-xs">
+                <i class="fa-solid fa-bolt"></i> 1-Click Auto Router
+            </span>
+        </div>
+
+        <form id="dash-quick-form" action="/portal-boss-secure-2026/quick-publish" method="POST" class="space-y-4">
+            <div>
+                <label class="block font-bold text-slate-200 text-xs mb-1.5 flex items-center justify-between">
+                    <span>यहाँ पूरा कच्चा टेक्स्ट पेस्ट करें:</span>
+                    <span class="text-[11px] text-amber-300">जैसे: RRB 195 Posts, Last Date 4 Dec, Fee 500...</span>
+                </label>
+                <textarea 
+                    name="raw_text" 
+                    id="dash_smart_raw_text" 
+                    rows="4" 
+                    required 
+                    placeholder="यहाँ कोई भी भर्ती का कच्चा विवरण कॉपी-पेस्ट करें..." 
+                    class="w-full bg-slate-950/80 border border-indigo-500/40 rounded-2xl p-4 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 font-sans leading-relaxed"
+                ></textarea>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Instant Direct Publish -->
+                    <button 
+                        type="submit" 
+                        onclick="return confirm('क्या आप इस पोस्ट को तुरंत लाइव पब्लिश करना चाहते हैं? ऑटोमेशन इसे तुरंत सही श्रेणी में डाल देगा।');" 
+                        class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 text-xs sm:text-sm transform active:scale-98 cursor-pointer"
+                    >
+                        <i class="fa-solid fa-rocket"></i>
+                        <span>🚀 सीधा लाइव पब्लिश करें (1-Click Publish)</span>
+                    </button>
+
+                    <!-- Open and auto-fill in full form -->
+                    <button 
+                        type="button" 
+                        onclick="openInFullForm()" 
+                        class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 text-xs sm:text-sm transform active:scale-98 cursor-pointer"
+                    >
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>✨ पहचान कर फॉर्म में खोलें (Open & Review Form)</span>
+                    </button>
+                </div>
+
+                <button 
+                    type="button" 
+                    onclick="document.getElementById('dash_smart_raw_text').value=''" 
+                    class="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                >
+                    साफ करें (Clear)
+                </button>
+            </div>
+        </form>
+    </div>
+
     <!-- Exam Listings Table -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         
@@ -226,4 +293,17 @@
     </div>
 
 </div>
+
+<script>
+    function openInFullForm() {
+        const rawText = document.getElementById('dash_smart_raw_text').value.trim();
+        if (!rawText) {
+            alert("कृपया पहले बॉक्स में कोई टेक्स्ट पेस्ट करें!");
+            return;
+        }
+        // Redirect to /portal-boss-secure-2026/exams/new with encoded raw_text
+        const url = '/portal-boss-secure-2026/exams/new?raw_text=' + encodeURIComponent(rawText);
+        window.location.href = url;
+    }
+</script>
 {% endblock %}

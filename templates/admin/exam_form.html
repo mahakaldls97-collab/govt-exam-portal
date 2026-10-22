@@ -26,6 +26,79 @@
     <!-- Main Form -->
     <form action="{{ '/portal-boss-secure-2026/exams/edit/' ~ exam.id if exam else '/portal-boss-secure-2026/exams/new' }}" method="POST" class="space-y-6">
         
+        <!-- ⚡ SMART AI QUICK AUTO-FILL BOX (कच्चा टेक्स्ट / पोस्ट यहाँ पेस्ट करें - 1 सेकंड में फॉर्म भरें) -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border-2 border-indigo-500/50 space-y-4 relative overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800/80 pb-3">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-black text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-300 animate-pulse"></i>
+                        ⚡ Quick Smart Auto-Fill (कच्चा टेक्स्ट पेस्ट करें - 1 सेकंड में फॉर्म भरें)
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-1">
+                        जब भी आप जल्दी में हों, किसी भी वेबसाइट, नोटिफिकेशन या व्हाट्सएप का पूरा विवरण नीचे बॉक्स में पेस्ट करें। सिस्टम अपने आप <strong class="text-white">कैटेगरी (Railway, Police, SSC, Teaching आदि)</strong>, तारीखें, फीस, योग्यता और लिंक्स पहचान कर सभी बॉक्स भर देगा!
+                    </p>
+                </div>
+                <span class="text-xs bg-emerald-500/20 text-emerald-300 font-extrabold px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                    <i class="fa-solid fa-bolt"></i> 100% Time-Saver
+                </span>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-200 text-xs mb-1.5 flex items-center justify-between">
+                    <span>यहाँ पूरा टेक्स्ट पेस्ट करें (Raw Notification / WhatsApp / Website Text):</span>
+                    <span class="text-[11px] text-amber-300 font-normal">जैसे आपने मुझे भेजा था</span>
+                </label>
+                <textarea 
+                    id="smart_raw_text" 
+                    rows="6" 
+                    placeholder="यहाँ कोई भी पोस्ट कॉपी करके पेस्ट कर दें... जैसे: RRB Isolated Categories Recruitment 2026, 195 Posts, Last Date 4 December, Fee 500, rrbapply.gov.in..." 
+                    class="w-full bg-slate-950/80 border border-indigo-500/40 rounded-2xl p-4 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 font-sans leading-relaxed"
+                >{{ raw_text if raw_text else '' }}</textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- 1. Auto-fill button -->
+                    <button 
+                        type="button" 
+                        id="btn-auto-fill" 
+                        onclick="triggerSmartAutoFill()" 
+                        class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 text-xs sm:text-sm transform active:scale-98 cursor-pointer"
+                    >
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>✨ पहचान कर फॉर्म ऑटो-भरें (Auto-Fill Form)</span>
+                    </button>
+
+                    <!-- 2. One-Click Instant Direct Publish button -->
+                    <button 
+                        type="button" 
+                        id="btn-direct-publish" 
+                        onclick="triggerInstantPublish()" 
+                        class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 text-xs sm:text-sm transform active:scale-98 cursor-pointer"
+                    >
+                        <i class="fa-solid fa-rocket"></i>
+                        <span>🚀 सीधा लाइव पब्लish करें (1-Click Publish)</span>
+                    </button>
+                </div>
+
+                <!-- Clear button -->
+                <button 
+                    type="button" 
+                    onclick="document.getElementById('smart_raw_text').value=''" 
+                    class="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                >
+                    साफ करें (Clear)
+                </button>
+            </div>
+
+            <!-- Success Toast Alert -->
+            <div id="smart-fill-status" class="hidden p-3.5 rounded-xl bg-emerald-950 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+                <span id="smart-fill-msg">सभी फील्ड सफलतापूर्वक भर दी गई हैं!</span>
+            </div>
+        </div>
+        
         <!-- SECTION 1: Basic Information -->
         <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
             <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -66,13 +139,15 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Category *</label>
                     <select name="category" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="State" {% if exam and exam.category == 'State' %}selected{% endif %}>State PSC & Other (राज्य भर्ती)</option>
+                        <option value="Results" {% if exam and exam.category == 'Results' %}selected{% endif %}>Results & Cut-Off (परिणाम)</option>
+                        <option value="Admit Card" {% if exam and exam.category == 'Admit Card' %}selected{% endif %}>Admit Card & Dates (प्रवेश पत्र)</option>
+                        <option value="Railway" {% if exam and exam.category == 'Railway' %}selected{% endif %}>Railway (RRB NTPC, Group D)</option>
+                        <option value="Police" {% if exam and exam.category == 'Police' %}selected{% endif %}>Police & Defense (पुलिस व सेना)</option>
                         <option value="Teaching" {% if exam and exam.category == 'Teaching' %}selected{% endif %}>Teaching (CTET, REET, KVS)</option>
                         <option value="SSC" {% if exam and exam.category == 'SSC' %}selected{% endif %}>SSC (CGL, CHSL, GD, MTS)</option>
                         <option value="UPSC" {% if exam and exam.category == 'UPSC' %}selected{% endif %}>UPSC (IAS, IPS, NDA, CDS)</option>
-                        <option value="Railway" {% if exam and exam.category == 'Railway' %}selected{% endif %}>Railway (RRB NTPC, Group D)</option>
                         <option value="Banking" {% if exam and exam.category == 'Banking' %}selected{% endif %}>Banking (IBPS, SBI, RBI)</option>
-                        <option value="Police" {% if exam and exam.category == 'Police' %}selected{% endif %}>Police & Defense</option>
-                        <option value="State" {% if exam and exam.category == 'State' %}selected{% endif %}>State PSC & Other</option>
                     </select>
                 </div>
 
@@ -85,6 +160,17 @@
                         placeholder="e.g. CBSE, SSC, UPSC, Railway Recruitment Board" 
                         required 
                         class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">State / All India</label>
+                    <input 
+                        type="text" 
+                        name="state" 
+                        value="{{ exam.state if exam and exam.state else 'All India' }}" 
+                        placeholder="e.g. Rajasthan, Uttar Pradesh, All India" 
+                        class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                     >
                 </div>
 
@@ -311,6 +397,26 @@
             </div>
         </div>
 
+        <!-- SECTION 5B: Detailed Article & Tables (StudyGovtHelp Style Content) -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-solid fa-newspaper text-emerald-600"></i>
+                5B. Detailed Article & Tables (विस्तृत आलेख, पैराग्राफ व टेबल्स)
+            </h2>
+            <p class="text-xs text-slate-500">
+                studygovthelp की तरह अगर आपके पास कोई पूरी पोस्ट (विस्तृत पैराग्राफ, टेबल्स, गाइड) है, तो उसे यहाँ पेस्ट करें। यह पोस्ट पेज पर खूबसूरत फॉर्मेट में दिखेगा।
+            </p>
+            <div>
+                <label class="block font-bold text-slate-700 text-xs mb-1">Full Article Content / Custom Tables (HTML या Text)</label>
+                <textarea 
+                    name="content_html" 
+                    rows="8" 
+                    placeholder="यहाँ आप पूरा पैराग्राफ या टेबल्स पेस्ट कर सकते हैं..."
+                    class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-blue-500 font-sans"
+                >{{ exam.content_html if exam else '' }}</textarea>
+            </div>
+        </div>
+
         <!-- SECTION 6: Google SEO Configuration -->
         <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
             <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -364,6 +470,87 @@
                 .replace(/\s+/g, '-');
             slugInput.value = slug;
         });
+    }
+
+    // ⚡ Smart AI Quick Auto-Fill
+    async function triggerSmartAutoFill() {
+        const rawText = document.getElementById('smart_raw_text').value.trim();
+        if (!rawText) {
+            alert("कृपया पहले ऊपर दिए गए बॉक्स में कोई टेक्स्ट या नोटिफिकेशन पेस्ट करें!");
+            return;
+        }
+        
+        const btn = document.getElementById('btn-auto-fill');
+        const statusDiv = document.getElementById('smart-fill-status');
+        const statusMsg = document.getElementById('smart-fill-msg');
+        
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>पहचान रहा है (Processing)...</span>`;
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/portal-boss-secure-2026/api/auto-parse', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ raw_text: rawText })
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success' && result.data) {
+                const data = result.data;
+                
+                // Populate all matching form inputs
+                for (const [key, val] of Object.entries(data)) {
+                    const el = document.querySelector(`[name="${key}"]`);
+                    if (el && val !== undefined && val !== null) {
+                        el.value = val;
+                    }
+                }
+                
+                // Show success badge
+                statusMsg.innerHTML = `🎉 सफलता! <strong>${data.title}</strong> के लिए श्रेणी (<strong>${data.category}</strong>), कुल पद (${data.total_vacancies}), तारीखें, फीस, और सारणी अपने-आप भर दी गई हैं। नीचे देख लें और 'Create Exam Post & Publish' पर क्लिक करें!`;
+                statusDiv.classList.remove('hidden');
+                
+                // Smoothly scroll down to Section 1
+                const sec1 = document.querySelector('h2');
+                if (sec1) {
+                    sec1.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } else {
+                alert("टेक्स्ट पहचान में त्रुटि हुई। कृपया दोबारा प्रयास करें।");
+            }
+        } catch (err) {
+            alert("सर्वर से कनेक्ट करने में समस्या: " + err.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // 🚀 One-Click Instant Direct Publish
+    function triggerInstantPublish() {
+        const rawText = document.getElementById('smart_raw_text').value.trim();
+        if (!rawText) {
+            alert("कृपया पहले ऊपर दिए गए बॉक्स में कोई टेक्स्ट या नोटिफिकेशन पेस्ट करें!");
+            return;
+        }
+        
+        if (!confirm("क्या आप इस पोस्ट को तुरंत लाइव पब्लिश करना चाहते हैं?\n\nऑटोमेशन अपने-आप सही श्रेणी (Category) और सभी तारीखें पहचान कर वेबसाइट पर पोस्ट कर देगा!")) {
+            return;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/portal-boss-secure-2026/quick-publish';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'raw_text';
+        input.value = rawText;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
     }
 </script>
 {% endblock %}

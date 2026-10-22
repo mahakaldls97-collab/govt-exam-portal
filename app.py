@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import os
+import re
 import asyncio
 
 from database import (
@@ -131,11 +132,28 @@ async def home_page(request: Request):
         }
     )
 
+# Direct Official Redirect Mode
+# When False: opens the internal rich exam detail page (with complete Saarni/Tables, Dates, Fees, and Apply Buttons)
+# When True: forwards candidate straight to the official government apply/portal link.
+DIRECT_OFFICIAL_REDIRECT = False
+
 @app.get("/exam/{slug}", response_class=HTMLResponse)
 async def exam_detail_page(request: Request, slug: str):
     exam = get_exam_by_slug(slug)
     if not exam:
         raise HTTPException(status_code=404, detail="Exam information page not found")
+        
+    # Forward directly to official government portal
+    if DIRECT_OFFICIAL_REDIRECT:
+        target_url = (
+            exam.get('link_apply_online')
+            or exam.get('link_official_website')
+            or exam.get('link_notification_pdf')
+            or "/"
+        )
+        if target_url and target_url.startswith("http"):
+            return RedirectResponse(url=target_url, status_code=status.HTTP_302_FOUND)
+
     return templates.TemplateResponse(
         request=request,
         name="exam_detail.html",
@@ -144,13 +162,29 @@ async def exam_detail_page(request: Request, slug: str):
 
 @app.get("/category/{category}", response_class=HTMLResponse)
 async def category_page(request: Request, category: str):
-    exams = get_all_exams(category=category, limit=100)
+    exams = get_all_exams(category=category, limit=250)
     all_states = get_all_states()
+    
+    cat_clean = category.lower().replace("-", " ").strip()
+    if cat_clean in ('results', 'result'):
+        display_title = "Results & Cut-Off (सरकारी रिजल्ट)"
+    elif cat_clean in ('admit card', 'admit cards', 'admit'):
+        display_title = "Admit Cards & Exam Dates (प्रवेश पत्र)"
+    elif cat_clean in ('latest jobs', 'latest job', 'jobs', 'latest'):
+        display_title = "Latest Online Jobs & Forms (नवीनतम सरकारी नौकरियां)"
+    elif cat_clean in ('answer key', 'answer keys'):
+        display_title = "Answer Keys & Solutions (उत्तर कुंजी)"
+    elif cat_clean in ('syllabus', 'exam pattern'):
+        display_title = "Syllabus & Exam Pattern (पाठ्यक्रम व पैटर्न)"
+    else:
+        display_title = f"{category} Category Exams"
+
     return templates.TemplateResponse(
         request=request,
         name="category.html",
         context={
-            "category_name": category,
+            "category_name": display_title,
+            "raw_category": category,
             "exams": exams,
             "all_states": all_states
         }
@@ -531,15 +565,453 @@ async def admin_sync_studygovthelp(request: Request):
     msg = f"studygovthelp.in Sync Complete! {res['items_found']} posts examined, {res['items_added']} new vacancies added."
     return RedirectResponse(url=f"{SECRET_ADMIN_PATH}/automation?msg={msg}", status_code=status.HTTP_302_FOUND)
 
-@app.get(f"{SECRET_ADMIN_PATH}/exams/new", response_class=HTMLResponse)
-async def admin_new_exam_page(request: Request):
+def parse_raw_exam_text(raw_text: str) -> dict:
+    if not raw_text or not raw_text.strip():
+        return {}
+    text = raw_text.strip()
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    if not lines:
+        return {}
+
+    full_lower = text.lower()
+
+    # -------------------------------------------------------------
+    # 1. ACCURATE TITLE & SHORT TITLE EXTRACTION
+    # -------------------------------------------------------------
+    first_line = lines[0]
+    title = first_line
+    short_title = ""
+
+    if ":" in first_line:
+        p1, p2 = first_line.split(":", 1)
+        if len(p1.strip()) >= 5:
+            short_title = p1.strip()
+            title = first_line
+    else:
+        m_eng = re.search(r'([A-Za-z0-9\s\(\)\-\/]+202\d[A-Za-z0-9\s\(\)\-\/]*)', first_line)
+        if m_eng and len(m_eng.group(1).strip()) > 8:
+            short_title = m_eng.group(1).strip()
+        else:
+            short_title = first_line[:60]
+
+    # Clean short title of trailing junk
+    short_title = re.sub(r'\s*(?:Overview|Details|Information|Click Here|Notification|Apply Online)$', '', short_title, flags=re.I).strip()
+    if not short_title:
+        short_title = title[:50]
+
+    slug = re.sub(r'[^a-z0-9]+', '-', short_title.lower()).strip('-')
+    if not slug or len(slug) < 3:
+        slug = f"govt-exam-{abs(hash(title)) % 100000}"
+
+    # -------------------------------------------------------------
+    # 2. SECTION SLICING (StudyGovtHelp / Notification standard layout)
+    # -------------------------------------------------------------
+    sec_keywords = [
+        ('overview', 'overview'),
+        ('important dates', 'dates'),
+        ('application fees', 'fees'),
+        ('age limit', 'age'),
+        ('vacancy details', 'vacancy'),
+        ('educational qualification', 'qualification'),
+        ('selection process', 'selection'),
+        ('how to apply', 'how_to_apply'),
+        ('important links', 'links')
+    ]
+
+    sec_lines = {'intro': []}
+    current_sec = 'intro'
+    for line in lines:
+        lower_line = line.lower()
+        matched = None
+        for kw, sec_id in sec_keywords:
+            if kw in lower_line and len(lower_line) < 70:
+                matched = sec_id
+                break
+        if matched:
+            current_sec = matched
+            sec_lines[current_sec] = []
+        else:
+            sec_lines.setdefault(current_sec, []).append(line)
+
+    junk_tokens = [
+        'ज़्यादा जानें', 'परीक्षा तैयारी सामग्री', 'सरकारी नौकरी शिक्षा',
+        'पुलिस भर्ती देखें', 'सरकारी भर्ती सूचना', 'स्थानीय परमिट लें',
+        'तैयारी करें', 'सरकारी भर्ती खोजें', 'Details', 'Information',
+        'Event', 'Date', 'Category', 'Application Fee', 'Post Name',
+        'Pay Level', 'Vacancies'
+    ]
+
+    # -------------------------------------------------------------
+    # 3. OVERVIEW SECTION EXTRACTION
+    # -------------------------------------------------------------
+    overview_lines = sec_lines.get('overview', [])
+    board = ""
+    department = ""
+    post_name = ""
+    advt_no = ""
+    vacancies = ""
+    pay_level = ""
+    notif_date = ""
+    app_mode = "Online"
+    official_site = ""
+
+    for i in range(len(overview_lines) - 1):
+        k = overview_lines[i]
+        v = overview_lines[i+1]
+        if k == 'Recruitment Organization': board = v
+        elif k == 'Department': department = v
+        elif k == 'Post Name': post_name = v
+        elif k in ['Advertisement Number', 'Advertisement No', 'Advt No', 'CEN Number', 'CEN No']: advt_no = v
+        elif k in ['Total Vacancies', 'Total Posts']: vacancies = v
+        elif k == 'Pay Level': pay_level = v
+        elif k == 'Notification Date': notif_date = v
+        elif k == 'Application Mode': app_mode = v
+        elif k == 'Official Website': official_site = v
+
+    # Fallback regex search across entire text if overview section table was missing
+    if not board:
+        m_b = re.search(r'(?:Recruitment Organization|भर्ती बोर्ड|Department|विभाग)\s*[\n\r:]+\s*([^\n\r]+)', text, re.I)
+        if m_b: board = m_b.group(1).strip()
+    if not advt_no:
+        m_advt = re.search(r'(?:CEN\s*(?:No\.?)?\s*[\d\w\/]+|Advt\.?\s*(?:No\.?)?\s*[\d\w\/]+|विज्ञापन संख्या[^\n\r:]*)', text, re.I)
+        if m_advt: advt_no = m_advt.group(0).strip()
+    if not vacancies:
+        m_v = re.search(r'(?:Total Vacancies|Vacancies|Total Posts|कुल रिक्तियां|कुल पद)\s*[\n\r:]+\s*([^\n\r]+)', text, re.I)
+        if m_v:
+            vacancies = m_v.group(1).strip()
+        else:
+            m_v2 = re.search(r'(?:लगभग|approx\.?)?\s*(\d[\d,]*\+?)\s*(?:posts|vacancies|पद|रिक्तियां)', text, re.I)
+            if m_v2: vacancies = m_v2.group(0).strip()
+
+    # -------------------------------------------------------------
+    # 4. IMPORTANT DATES SECTION EXTRACTION
+    # -------------------------------------------------------------
+    dates_lines = sec_lines.get('dates', [])
+    indicative_date = ""
+    detailed_notif_date = ""
+    start_date = ""
+    last_date = ""
+    exam_date = ""
+
+    for i in range(len(dates_lines) - 1):
+        k = dates_lines[i]
+        v = dates_lines[i+1]
+        if k in ['Indicative Notice Release', 'Notice Release']: indicative_date = v
+        elif k in ['Detailed Notification', 'Notification Release']: detailed_notif_date = v
+        elif k in ['Online Application Start', 'Application Start', 'Start Date', 'आवेदन शुरू']: start_date = v
+        elif k in ['Last Date to Apply', 'Last Date', 'Closing Date', 'अंतिम तिथि']: last_date = v
+        elif k in ['Exam Date', 'CBT Date', 'परीक्षा तिथि']: exam_date = v
+
+    # Regex fallback for dates
+    if not start_date:
+        m_sd = re.search(r'(?:Online Application Start|Application Start|Start Date|आवेदन शुरू)\s*[\n\r:]+\s*([^\n\r]+)', text, re.I)
+        if m_sd: start_date = m_sd.group(1).strip()
+    if not last_date:
+        m_ld = re.search(r'(?:Last Date to Apply|Last Date|Closing Date|अंतिम तिथि)\s*[\n\r:]+\s*([^\n\r]+)', text, re.I)
+        if m_ld: last_date = m_ld.group(1).strip()
+    if not exam_date:
+        m_ed = re.search(r'(?:Exam Date|CBT Date|परीक्षा तिथि)\s*[\n\r:]+\s*([^\n\r]+)', text, re.I)
+        if m_ed: exam_date = m_ed.group(1).strip()
+
+    # -------------------------------------------------------------
+    # 5. APPLICATION FEES & REFUND RULES EXTRACTION
+    # -------------------------------------------------------------
+    fees_lines = sec_lines.get('fees', [])
+    fee_gen = ""
+    fee_res = ""
+    payment_mode = "Online"
+    refund_note = ""
+
+    for i in range(len(fees_lines) - 1):
+        k = fees_lines[i]
+        v = fees_lines[i+1]
+        if 'UR' in k or 'General' in k: fee_gen = v
+        elif 'SC' in k or 'आरक्षित' in k: fee_res = v
+        elif k == 'Payment Mode': payment_mode = v
+
+    for l in fees_lines:
+        if any(w in l for w in ['रिफंड', 'वापस', 'Refund', 'refund']):
+            clean_l = re.sub(r'(?:परीक्षा तैयारी सामग्री|ज़्यादा जानें|सरकारी भर्ती सूचना)', '', l).strip()
+            if clean_l: refund_note = clean_l
+
+    if not fee_gen:
+        m_fg = re.search(r'(?:UR\s*/\s*OBC\s*/\s*EWS|General|UR|सामान्य)[^\n\r:]*\s*[\n\r:]+\s*([₹\d]+)', text, re.I)
+        if m_fg: fee_gen = m_fg.group(1).strip()
+        if fee_gen and not fee_gen.startswith('₹'): fee_gen = '₹' + fee_gen
+    if not fee_res:
+        m_fr = re.search(r'(?:SC\s*/\s*ST[^\n\r:]*|आरक्षित[^\n\r:]*|Female[^\n\r:]*)\s*[\n\r:]+\s*([₹\d]+)', text, re.I)
+        if m_fr: fee_res = m_fr.group(1).strip()
+        if fee_res and not fee_res.startswith('₹'): fee_res = '₹' + fee_res
+
+    # -------------------------------------------------------------
+    # 6. AGE LIMIT EXTRACTION
+    # -------------------------------------------------------------
+    age_lines = sec_lines.get('age', [])
+    age_as_on = ""
+    age_text = " ".join(age_lines) if age_lines else text
+    m_age_on = re.search(r'आयु की गणना के लिए\s*([0-9\s]+(?:जनवरी|फरवरी|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सितंबर|अक्टूबर|नवंबर|दिसंबर|January|February|March|April|May|June|July|August|September|October|November|December)\s*\d{4})', age_text)
+    if m_age_on:
+        age_as_on = m_age_on.group(1).strip()
+    elif "2027" in age_text:
+        age_as_on = "01 January 2027"
+    else:
+        age_as_on = "01 January 2026"
+
+    # -------------------------------------------------------------
+    # 7. VACANCY DETAILS EXTRACTION
+    # -------------------------------------------------------------
+    vac_lines = sec_lines.get('vacancy', [])
+    for l in vac_lines:
+        if ('level' in l.lower() or 'grade' in l.lower()) and not pay_level:
+            pay_level = l
+        if re.search(r'\d+', l) and ('लगभग' in l or 'पद' in l or 'posts' in l.lower()) and not vacancies:
+            vacancies = l
+
+    # -------------------------------------------------------------
+    # 8. QUALIFICATION, SELECTION & HOW TO APPLY
+    # -------------------------------------------------------------
+    qual_lines = [l for l in sec_lines.get('qualification', []) if l not in junk_tokens and len(l) > 10]
+    qualification = "\n".join(qual_lines)
+
+    sel_lines = [l for l in sec_lines.get('selection', []) if l not in junk_tokens and len(l) > 3 and not l.startswith('उपलब्ध जानकारी')]
+    selection_process = "\n".join([f"• {l}" if not l.startswith('•') and not re.match(r'^\d+\.', l) else l for l in sel_lines])
+
+    how_lines = [l for l in sec_lines.get('how_to_apply', []) if l not in junk_tokens and len(l) > 10]
+    how_to_apply = "\n".join([f"{i+1}. {l}" if not re.match(r'^\d+\.', l) else l for i, l in enumerate(how_lines)])
+
+    # -------------------------------------------------------------
+    # 9. OFFICIAL GOVERNMENT LINKS EXTRACTION
+    # -------------------------------------------------------------
+    all_urls = re.findall(r'https?://[^\s<>\"\'\)]+', text)
+    if official_site and not official_site.startswith('http'):
+        official_site = 'https://' + official_site
+    if not official_site:
+        gov_urls = [u for u in all_urls if '.gov.in' in u or '.nic.in' in u or 'indianrailways' in u]
+        if gov_urls:
+            official_site = gov_urls[-1]
+        elif all_urls:
+            official_site = all_urls[0]
+
+    apply_link = official_site
+    for u in all_urls:
+        if 'apply' in u.lower():
+            apply_link = u
+            break
+
+    # -------------------------------------------------------------
+    # 10. CATEGORY & STATE DETECTION
+    # -------------------------------------------------------------
+    category = "State"
+    state_val = "All India"
+    if any(k in full_lower for k in ["rajasthan", "राजस्थान", "rssb", "rsmssb", "rpsc"]):
+        state_val = "Rajasthan"
+    elif any(k in full_lower for k in ["uttar pradesh", "उत्तर प्रदेश", "up police", "uppsc", "uppbpb"]):
+        state_val = "Uttar Pradesh"
+    elif any(k in full_lower for k in ["bihar", "बिहार", "bpsc", "bssc"]):
+        state_val = "Bihar"
+    elif any(k in full_lower for k in ["haryana", "हरियाणा", "hssc", "hpsc"]):
+        state_val = "Haryana"
+    elif any(k in full_lower for k in ["madhya pradesh", "मध्य प्रदेश", "mppsc", "esb"]):
+        state_val = "Madhya Pradesh"
+
+    if re.search(r'\b(railway|rrb|ntpc|group\s*d|rpf|alp|cen\s*no|रेलवे)\b', full_lower):
+        category = "Railway"
+        state_val = "All India"
+    elif re.search(r'\b(police|constable|daroga|si\b|cisf|bsf|crpf|itbp|army|navy|airforce|agniveer|पुलिस|दरोगा|सिपाही)\b', full_lower) or ("sashastra seema bal" in full_lower):
+        category = "Police"
+    elif re.search(r'\b(ssc|cgl|chsl|mts|cpo|stenographer|कर्मचारी चयन आयोग)\b', full_lower) and not any(k in full_lower for k in ["rssb", "rsmssb", "rajasthan"]):
+        category = "SSC"
+        state_val = "All India"
+    elif re.search(r'\b(upsc|ias|ips|nda|cds|civil services|cse|संघ लोक सेवा आयोग)\b', full_lower):
+        category = "UPSC"
+        state_val = "All India"
+    elif re.search(r'\b(ctet|reet|kvs|nvs|dsssb|tet|teacher|shikshak|adhyapak|bed|d\.el\.ed|prt|tgt|pgt|शिक्षक|अध्यापक)\b', full_lower):
+        category = "Teaching"
+    elif re.search(r'\b(bank|ibps|sbi|rbi|nabard|clerk|po\b|probationary officer|बैंकिंग)\b', full_lower):
+        category = "Banking"
+        state_val = "All India"
+
+    # -------------------------------------------------------------
+    # 11. POST TYPE & STATUS DETECTION
+    # -------------------------------------------------------------
+    if any(w in full_lower for w in ["result", "रिजल्ट", "scorecard", "परिणाम", "cut off", "कटऑफ"]):
+        post_type = "result"
+        status_val = "Result Declared"
+    elif any(w in full_lower for w in ["admit card", "प्रवेश पत्र", "hall ticket", "call letter"]):
+        post_type = "admit_card"
+        status_val = "Admit Card Released"
+    elif any(w in full_lower for w in ["answer key", "उत्तर कुंजी", "आंसर की"]):
+        post_type = "answer_key"
+        status_val = "Answer Key Released"
+    elif any(w in full_lower for w in ["upcoming", "संभावित", "आगामी"]) and "start" not in full_lower:
+        post_type = "upcoming"
+        status_val = "Upcoming Notification"
+    else:
+        post_type = "job"
+        status_val = "Applications Open"
+
+    # -------------------------------------------------------------
+    # 12. FALLBACK DEFAULTS FOR ANY EMPTY FIELD
+    # -------------------------------------------------------------
+    if not board:
+        board = "Railway Recruitment Boards (RRBs)" if category == "Railway" else f"{state_val} Recruitment Board"
+    if not post_name:
+        post_name = short_title
+    if not department:
+        department = board
+    if not vacancies:
+        vacancies = "Various Posts"
+    if not pay_level:
+        pay_level = "Level 2 to Level 7 / 7th CPC Matrix"
+    if not notif_date:
+        notif_date = detailed_notif_date or indicative_date or "October 2026"
+    if not start_date:
+        start_date = "आवेदन प्रारंभ (Check Notice)" if post_type == "job" else "संपन्न"
+    if not last_date:
+        last_date = "अधिसूचना अनुसार"
+    if not exam_date:
+        exam_date = "To Be Notified Soon (CBT)" if post_type != "result" else "परीक्षा संपन्न"
+    if not fee_gen:
+        fee_gen = "₹500 (अधिसूचना अनुसार)" if post_type == "job" else "N/A"
+    if not fee_res:
+        fee_res = "₹250 (अधिसूचना अनुसार)" if post_type == "job" else "N/A"
+    if not qualification:
+        qualification = "पदवार शैक्षणिक योग्यता व अन्य शर्तें विस्तृत आधिकारिक विज्ञापन में देखें।"
+    if not selection_process:
+        selection_process = "• कंप्यूटर आधारित परीक्षा (CBT / Written Exam)\n• दस्तावेज सत्यापन (Document Verification)\n• चिकित्सा परीक्षण (Medical Examination)"
+    if not how_to_apply:
+        how_to_apply = f"1. सबसे पहले {board} की आधिकारिक वेबसाइट {official_site or 'पर'} जाएं।\n2. विस्तृत विज्ञापन डाउनलोड करें और पात्रता जांचें।\n3. 'Apply Online' लिंक पर क्लिक करके अपना फॉर्म भरें।\n4. आवेदन शुल्क जमा करके फाइनल प्रिंट निकाल लें।"
+
+    # Short intro description
+    if post_type == "result":
+        short_desc = f"{board} द्वारा {short_title} का परिणाम व स्कोरकार्ड घोषित कर दिया गया है। अभ्यर्थी सीधे आधिकारिक पोर्टल {official_site} से अपना रिजल्ट चेक कर सकते हैं।"
+    else:
+        short_desc = f"{board} ने {short_title} का विज्ञापन ({advt_no or 'Notification'}) जारी कर दिया है। कुल {vacancies} पदों पर भर्ती हेतु ऑनलाइन आवेदन {start_date} से {last_date} तक आमंत्रित किए गए हैं।"
+
+    # Dynamic SEO
+    if post_type == "result":
+        meta_title = f"{short_title} Result, Cut Off & Merit List - SarkariNexus 360"
+        meta_description = f"{short_title} Result declared by {board}. Check direct scorecard link and cut off at {official_site}."
+        keywords = f"{short_title}, {board}, {short_title} result, scorecard, merit list, cut off"
+    else:
+        meta_title = f"{short_title} Notification, Apply Online, Vacancy & Dates"
+        meta_description = f"{short_title} notification for {vacancies}. Check online application dates, fees, qualification and direct apply link at {official_site}."
+        keywords = f"{short_title}, {board}, {category} Bharti 2026, {post_name}, apply online, {advt_no}"
+
+    # Build clean HTML content paras for extra details
+    clean_paras = []
+    for line in lines:
+        if len(line) > 40 and not line.startswith('http') and not any(p in line for p in junk_tokens):
+            clean_paras.append(f"<p class='text-slate-700 leading-relaxed my-2'>{line}</p>")
+    content_html = "\n".join(clean_paras[:6])
+
+    return {
+        "title": title,
+        "short_title": short_title,
+        "slug": slug,
+        "category": category,
+        "state": state_val,
+        "board_name": board,
+        "department": department,
+        "post_name": post_name,
+        "advt_no": advt_no,
+        "total_vacancies": vacancies,
+        "pay_level": pay_level,
+        "status": status_val,
+        "badge_color": "emerald" if post_type == "job" else ("amber" if post_type == "result" else "blue"),
+        "notification_date": notif_date,
+        "apply_start_date": start_date,
+        "apply_last_date": last_date,
+        "fee_last_date": last_date,
+        "correction_last_date": "As per notification rules",
+        "admit_card_date": "Before Examination" if post_type == "job" else "उपलब्ध",
+        "exam_date": exam_date,
+        "result_date": "After Examination" if post_type != "result" else "घोषित (Declared)",
+        "fee_general": fee_gen,
+        "fee_reserved": fee_res,
+        "fee_payment_mode": payment_mode,
+        "fee_refund_note": refund_note,
+        "min_age": "18 Years",
+        "max_age": "Post-wise / पद के अनुसार",
+        "age_as_on": age_as_on,
+        "age_relaxation": "SC/ST: 5 Years | OBC: 3 Years | PwBD: 10 Years as per rules",
+        "eligibility_criteria": qualification,
+        "selection_process": selection_process,
+        "how_to_apply": how_to_apply,
+        "link_apply_online": apply_link,
+        "link_notification_pdf": official_site,
+        "link_admit_card": official_site,
+        "link_result": official_site if post_type == "result" else "",
+        "link_official_website": official_site,
+        "content_html": content_html,
+        "meta_title": meta_title,
+        "meta_description": meta_description[:160],
+        "keywords": keywords,
+        "short_description": short_desc
+    }
+
+# API endpoint for smart raw text parsing
+@app.post(f"{SECRET_ADMIN_PATH}/api/auto-parse")
+async def api_auto_parse_exam(request: Request):
+    admin = get_current_admin(request)
+    if not admin:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        payload = await request.json()
+        raw_text = payload.get("raw_text", "")
+    else:
+        form_data = await request.form()
+        raw_text = form_data.get("raw_text", "")
+        
+    parsed = parse_raw_exam_text(raw_text)
+    return JSONResponse(content={"status": "success", "data": parsed})
+
+# 1-Click Instant Save & Publish Endpoint
+@app.post(f"{SECRET_ADMIN_PATH}/quick-publish")
+async def admin_quick_publish(request: Request):
     admin = get_current_admin(request)
     if not admin:
         return RedirectResponse(url=f"{SECRET_ADMIN_PATH}/login", status_code=status.HTTP_302_FOUND)
+    
+    form_data = await request.form()
+    raw_text = form_data.get("raw_text", "")
+    if not raw_text or not raw_text.strip():
+        return RedirectResponse(url=f"{SECRET_ADMIN_PATH}?msg=Error: No raw text provided", status_code=status.HTTP_302_FOUND)
+        
+    parsed = parse_raw_exam_text(raw_text)
+    if not parsed:
+        return RedirectResponse(url=f"{SECRET_ADMIN_PATH}?msg=Error: Unable to parse text", status_code=status.HTTP_302_FOUND)
+    
+    # Ensure unique slug
+    slug = parsed['slug']
+    base_slug = slug
+    counter = 1
+    while get_exam_by_slug(slug):
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+    parsed['slug'] = slug
+    parsed['is_featured'] = 1
+    parsed['is_auto_synced'] = 0
+    
+    create_exam(parsed)
+    return RedirectResponse(url=f"/exam/{slug}", status_code=status.HTTP_302_FOUND)
+
+@app.get(f"{SECRET_ADMIN_PATH}/exams/new", response_class=HTMLResponse)
+async def admin_new_exam_page(request: Request, raw_text: str = ""):
+    admin = get_current_admin(request)
+    if not admin:
+        return RedirectResponse(url=f"{SECRET_ADMIN_PATH}/login", status_code=status.HTTP_302_FOUND)
+    
+    initial_exam = None
+    if raw_text and raw_text.strip():
+        initial_exam = parse_raw_exam_text(raw_text)
+        
     return templates.TemplateResponse(
         request=request,
         name="admin/exam_form.html",
-        context={"exam": None}
+        context={"exam": initial_exam, "raw_text": raw_text}
     )
 
 @app.post(f"{SECRET_ADMIN_PATH}/exams/new")

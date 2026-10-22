@@ -108,6 +108,30 @@ def init_db():
         cursor.execute("ALTER TABLE exams ADD COLUMN content_html TEXT DEFAULT ''")
     except Exception:
         pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN short_title TEXT DEFAULT ''")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN post_name TEXT DEFAULT ''")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN department TEXT DEFAULT ''")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN advt_no TEXT DEFAULT ''")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN pay_level TEXT DEFAULT ''")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN fee_refund_note TEXT DEFAULT ''")
+    except Exception:
+        pass
     
     # Admin users table
     cursor.execute("""
@@ -178,8 +202,20 @@ def get_all_exams(limit=100, category=None, search=None, status=None, state=None
         query += " AND status NOT IN ('Archived', 'Expired')"
     
     if category and category.lower() != 'all':
-        query += " AND LOWER(category) = LOWER(?)"
-        params.append(category)
+        cat_clean = category.lower().replace("-", " ").strip()
+        if cat_clean in ('results', 'result', 'परिणाम'):
+            query += " AND (status LIKE '%Result%' OR LOWER(category) = 'results')"
+        elif cat_clean in ('admit card', 'admit cards', 'admit', 'प्रवेश पत्र'):
+            query += " AND (status LIKE '%Admit%' OR LOWER(category) = 'admit card')"
+        elif cat_clean in ('latest jobs', 'latest job', 'jobs', 'latest', 'ऑनलाइन फॉर्म', 'job'):
+            query += " AND (status LIKE '%Open%' OR status LIKE '%Active%' OR (status NOT LIKE '%Result%' AND status NOT LIKE '%Admit%'))"
+        elif cat_clean in ('answer key', 'answer keys', 'answer', 'उत्तर कुंजी'):
+            query += " AND (status LIKE '%Answer Key%' OR LOWER(category) = 'answer key' OR title LIKE '%Answer Key%')"
+        elif cat_clean in ('syllabus', 'exam pattern', 'पाठ्यक्रम'):
+            query += " AND (syllabus_summary IS NOT NULL AND length(syllabus_summary) > 5 OR title LIKE '%Syllabus%')"
+        else:
+            query += " AND LOWER(category) = LOWER(?)"
+            params.append(category)
         
     if status:
         query += " AND status LIKE ?"
@@ -264,7 +300,8 @@ def create_exam(data):
         'age_relaxation', 'eligibility_criteria', 'selection_process', 'syllabus_summary',
         'how_to_apply', 'link_apply_online', 'link_notification_pdf', 'link_admit_card',
         'link_answer_key', 'link_result', 'link_official_website', 'link_previous_papers',
-        'meta_title', 'meta_description', 'keywords', 'is_featured', 'is_auto_synced', 'source_url', 'state', 'content_html'
+        'meta_title', 'meta_description', 'keywords', 'is_featured', 'is_auto_synced', 'source_url', 'state', 'content_html',
+        'short_title', 'post_name', 'department', 'advt_no', 'pay_level', 'fee_refund_note'
     ]
     
     if not data.get('state'):
@@ -313,7 +350,8 @@ def update_exam(exam_id, data):
         'age_relaxation', 'eligibility_criteria', 'selection_process', 'syllabus_summary',
         'how_to_apply', 'link_apply_online', 'link_notification_pdf', 'link_admit_card',
         'link_answer_key', 'link_result', 'link_official_website', 'link_previous_papers',
-        'meta_title', 'meta_description', 'keywords', 'is_featured', 'state', 'content_html'
+        'meta_title', 'meta_description', 'keywords', 'is_featured', 'state', 'content_html',
+        'short_title', 'post_name', 'department', 'advt_no', 'pay_level', 'fee_refund_note'
     ]
     
     status = data.get('status', 'Applications Open')
@@ -494,6 +532,11 @@ def auto_cleanup_expired_exams():
             except Exception:
                 pass
 
+        # Guard against misclassifying specific title types:
+        t = exam.get('title', '').lower()
+        is_explicit_admit = any(k in t for k in ['admit card', 'exam city', 'city intimation', 'hall ticket', 'call letter', 'cbtst'])
+        is_explicit_result = any(k in t for k in ['result', 'answer key', 'cut off', 'merit list', 'score card', 'dv schedule', 'allotment'])
+
         # Stage 4: Archive if result declared > 30 days ago OR created > 90 days ago with apply_passed
         # But NEVER archive if the exam date is in the future!
         if (result_passed and days_since_result > 30) or (apply_passed and days_old > 90 and not (exam_dt and exam_dt >= now)):
@@ -504,8 +547,8 @@ def auto_cleanup_expired_exams():
                 print(f"  [LIFECYCLE -> ARCHIVED] {exam['title']}")
                 continue
                 
-        # Stage 3: Result / Answer Key (if exam has already taken place)
-        if exam_passed and curr_status not in ['Result Declared', 'Result / Answer Key', 'Archived']:
+        # Stage 3: Result / Answer Key (if exam has already taken place) - ONLY for general recruitment posts
+        if exam_passed and curr_status not in ['Result Declared', 'Result / Answer Key', 'Archived'] and not is_explicit_admit:
             cursor.execute("UPDATE exams SET status = 'Result / Answer Key', badge_color = 'amber', updated_at = ? WHERE id = ?",
                            (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
             moved_to_result += 1
@@ -513,7 +556,7 @@ def auto_cleanup_expired_exams():
             continue
             
         # Stage 2: Form closed -> Move to 'Admit Card / Exam' (so applicants can download admit cards)
-        if apply_passed and curr_status in ['Applications Open', 'Upcoming Notification', 'Upcoming']:
+        if apply_passed and curr_status in ['Applications Open', 'Upcoming Notification', 'Upcoming'] and not is_explicit_result:
             cursor.execute("UPDATE exams SET status = 'Admit Card / Exam', badge_color = 'blue', updated_at = ? WHERE id = ?",
                            (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
             moved_to_admit += 1
