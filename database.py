@@ -1,8 +1,21 @@
 import sqlite3
 import os
+import shutil
+import tempfile
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "portal.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ORIGINAL_DB = os.path.join(BASE_DIR, "portal.db")
+
+# In serverless environments (like Vercel), the deployment root is read-only.
+# We copy portal.db to /tmp/portal.db so SQLite can execute reads and writes without error.
+if os.getenv("VERCEL") or not os.access(BASE_DIR, os.W_OK):
+    DB_PATH = os.path.join(tempfile.gettempdir(), "portal.db")
+    if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
+        if os.path.exists(ORIGINAL_DB):
+            shutil.copy2(ORIGINAL_DB, DB_PATH)
+else:
+    DB_PATH = ORIGINAL_DB
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -213,8 +226,11 @@ def get_exam_by_slug(slug):
     cursor.execute("SELECT * FROM exams WHERE slug = ?", (slug,))
     row = cursor.fetchone()
     if row:
-        cursor.execute("UPDATE exams SET views_count = views_count + 1 WHERE slug = ?", (slug,))
-        conn.commit()
+        try:
+            cursor.execute("UPDATE exams SET views_count = views_count + 1 WHERE slug = ?", (slug,))
+            conn.commit()
+        except Exception:
+            pass
         exam = dict(row)
         cursor.execute("SELECT * FROM faqs WHERE exam_id = ?", (exam['id'],))
         exam['faqs'] = [dict(faq) for faq in cursor.fetchall()]
