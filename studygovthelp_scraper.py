@@ -401,8 +401,10 @@ def sync_from_studygovthelp(pages: int = 3, per_page: int = 20) -> dict:
                             update_exam(exam_id, parsed)
                             items_updated += 1
                         conn.close()
+                        continue
                     except Exception as e:
                         print(f"Notice on updating existing record: {e}")
+                        continue
                 # Filter out non-recruitment junk articles (e.g. elections, voter list, aadhar, pure stubs)
                 t_lower = title.lower()
                 JUNK_FILTER = [
@@ -424,6 +426,12 @@ def sync_from_studygovthelp(pages: int = 3, per_page: int = 20) -> dict:
                     print(f"  [-] Skipping stub/news article with incomplete data: {title}")
                     continue
                 
+                base_slug = parsed['slug']
+                s_counter = 1
+                while exam_exists(parsed['slug']):
+                    parsed['slug'] = f"{base_slug}-{s_counter}"
+                    s_counter += 1
+
                 create_exam(parsed)
                 items_added += 1
                 added_titles.append(f"{title} ({parsed['state']})")

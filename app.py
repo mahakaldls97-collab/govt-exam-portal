@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 import re
 import asyncio
+from datetime import datetime
 
 from database import (
     init_db, get_all_exams, get_exam_by_slug, get_exam_by_id,
@@ -100,6 +101,31 @@ async def api_sync_sarkariresult():
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
+# API: Master 24/7 All-Portals Auto-Sync Endpoint (triggered by Cron / GitHub Actions)
+@app.post("/api/sync/all")
+@app.get("/api/sync/all")
+async def api_sync_all_portals():
+    results = {}
+    try:
+        res_study = sync_from_studygovthelp(pages=2, per_page=15)
+        results["studygovthelp"] = res_study
+    except Exception as e:
+        results["studygovthelp"] = {"status": "error", "message": str(e)}
+
+    try:
+        res_sarkari = sync_from_sarkariresult(limit_deep_scrape=8)
+        results["sarkariresult"] = res_sarkari
+    except Exception as e:
+        results["sarkariresult"] = {"status": "error", "message": str(e)}
+
+    total_added = (results.get("studygovthelp", {}).get("items_added", 0) or 0) + (results.get("sarkariresult", {}).get("items_added", 0) or 0)
+    return JSONResponse(content={
+        "status": "success",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "total_new_exams_added": total_added,
+        "details": results
+    })
 
 # API: Get exams by state (for map interaction)
 @app.get("/api/exams-by-state")
