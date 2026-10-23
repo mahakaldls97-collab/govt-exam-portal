@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}SarkariNexus 360™ - India's Premier 3D Sarkari Result & Recruitment Intelligence Portal 2026{% endblock %}
+{% block title %}SarkariNexus 360 - Sarkari Result, Admit Card & Government Exam Portal 2026{% endblock %}
+
+{% block meta_description %}Latest government exam notifications, online forms, admit cards, answer keys and results for SSC, UPSC, Railway, Banking, Police, Teaching and all Indian states.{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
@@ -16,9 +18,9 @@
             <!-- Live Badge -->
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs shadow-inner">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 live-pulse"></span>
-                <span class="font-bold text-slate-200">Real-Time Auto-Synchronized</span>
+                <span class="font-bold text-slate-200">Official Notifications & Results</span>
                 <span class="text-slate-500">•</span>
-                <span class="text-cyan-400 font-extrabold">All-India & State Feeds</span>
+                <span class="text-cyan-400 font-extrabold">All-India & State Exams</span>
             </div>
 
             <!-- Main Heading -->
@@ -31,20 +33,20 @@
             </h1>
 
             <p class="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                Direct access to official government recruitment notifications, online application forms, admit cards, answer keys, and declared results with 100% verified links.
+                Government recruitment notifications, online application forms, admit cards, answer keys and declared results — with direct links to official commission portals.
             </p>
 
             <!-- 3D Interactive Search Bar -->
             <form action="/search" method="GET" class="pt-3 max-w-2xl mx-auto">
                 <div class="relative flex items-center bg-white rounded-2xl p-1.5 shadow-2xl shadow-cyan-950/40 border border-slate-200 transition focus-within:ring-4 focus-within:ring-cyan-500/30">
-                    <span class="pl-4 pr-2 text-slate-400 text-lg">
+                    <span class="hidden sm:block pl-4 pr-2 text-slate-400 text-lg">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </span>
-                    <input type="text" name="q" placeholder="Search SSC CGL, UPSC, Railway RRB, CTET, Rajasthan LDC, Police..."
-                        class="w-full text-slate-900 placeholder-slate-400 text-xs sm:text-sm px-2 py-3 focus:outline-none font-semibold" required>
-                    <button type="submit" class="bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs sm:text-sm px-6 py-3 rounded-xl shadow-lg shadow-cyan-500/25 transition transform active:scale-95 flex items-center gap-2 shrink-0">
+                    <input type="text" name="q" placeholder="Search exams..."
+                        class="w-full text-slate-900 placeholder-slate-400 text-xs sm:text-sm px-3 sm:px-2 py-3 focus:outline-none font-semibold" required>
+                    <button type="submit" class="bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-lg shadow-cyan-500/25 transition transform active:scale-95 flex items-center gap-2 shrink-0">
                         <span>Search</span>
-                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                        <i class="hidden sm:inline fa-solid fa-arrow-right text-xs"></i>
                     </button>
                 </div>
             </form>
@@ -73,7 +75,7 @@
                 </span>
                 <span>Top Trending Recruitments (प्रमुख भर्तियां)</span>
             </h2>
-            <span class="text-xs font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-3 py-1 rounded-full">
+            <span class="hidden sm:inline-block text-xs font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-3 py-1 rounded-full">
                 ⚡ Hot Notifications
             </span>
         </div>
@@ -87,7 +89,7 @@
                         {{ exam.category }}
                     </span>
                     <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> {{ exam.status }}
                     </span>
                 </div>
 
@@ -103,10 +105,10 @@
 
                 <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
                     <span class="font-bold text-emerald-700">
-                        {{ exam.total_vacancies or 'Various Posts' }}
+                        {{ exam.total_vacancies or 'Vacancy details' }}
                     </span>
                     <span class="text-blue-600 font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                        Apply <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        Details <i class="fa-solid fa-arrow-right text-[10px]"></i>
                     </span>
                 </div>
             </a>
@@ -125,11 +127,11 @@
             <span class="text-[11px] text-slate-500 font-medium">Click state to view localized vacancies</span>
         </div>
         <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <a href="/search?state=All India" class="state-pill active shrink-0">
+            <a href="/search?state=All%20India" class="state-pill active shrink-0">
                 🇮🇳 All India (Central)
             </a>
             {% for st in all_states %}
-            <a href="/search?state={{ st.state }}" class="state-pill shrink-0">
+            <a href="/search?state={{ st.state|urlencode }}" class="state-pill shrink-0">
                 {{ st.state }} <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-bold">({{ st.count }})</span>
             </a>
             {% endfor %}
@@ -181,7 +183,7 @@
                         {% endif %}
                     {% endfor %}
                     {% if count_res[0] == 0 %}
-                    <li class="p-6 text-center text-xs text-slate-400">Loading live results...</li>
+                    <li class="p-6 text-center text-xs text-slate-400">No results listed right now.</li>
                     {% endif %}
                 </ul>
             </div>
@@ -234,7 +236,7 @@
                         </li>
                         {% endfor %}
                     {% else %}
-                        <li class="p-6 text-center text-xs text-slate-400">Loading admit cards...</li>
+                        <li class="p-6 text-center text-xs text-slate-400">No admit cards listed right now.</li>
                     {% endif %}
                 </ul>
             </div>
@@ -289,7 +291,7 @@
                         </li>
                         {% endfor %}
                     {% else %}
-                        <li class="p-6 text-center text-xs text-slate-400">Loading latest vacancies...</li>
+                        <li class="p-6 text-center text-xs text-slate-400">No active application forms right now.</li>
                     {% endif %}
                 </ul>
             </div>
@@ -388,12 +390,12 @@
                 <i class="fa-solid fa-shield-check"></i>
             </div>
             <div>
-                <h4 class="font-heading font-bold text-sm text-white">100% Direct Official Government Portals</h4>
-                <p class="text-xs text-slate-400">Every notification links directly to official commission websites (UPSC, SSC, Railway, State PSC, NTA).</p>
+                <h4 class="font-heading font-bold text-sm text-white">Official Portal Links</h4>
+                <p class="text-xs text-slate-400">Notifications, application forms, admit cards and results link to official commission websites (UPSC, SSC, Railway, State PSC, NTA) whenever published.</p>
             </div>
         </div>
         <a href="/search?q=" class="btn-3d-blue text-white font-bold text-xs px-5 py-2.5 rounded-xl whitespace-nowrap">
-            Search All 700+ Vacancies
+            Search All Exams
         </a>
     </div>
 

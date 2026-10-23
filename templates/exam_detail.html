@@ -6,7 +6,36 @@
 
 {% block keywords %}{{ exam.keywords if exam.keywords else exam.title ~ ', dates, eligibility, vacancy, admit card, result, apply online' }}{% endblock %}
 
+{% block canonical %}{{ request.base_url }}exam/{{ exam.slug }}{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": {{ exam.title|tojson }},
+  "description": {{ exam.short_description|tojson }},
+  "datePublished": "{{ exam.notification_date[:10] if exam.notification_date else exam.updated_at[:10] }}",
+  "dateModified": "{{ exam.updated_at[:10] }}",
+  "mainEntityOfPage": {{ (request.base_url ~ 'exam/' ~ exam.slug)|tojson }},
+  "publisher": { "@type": "Organization", "name": "SarkariNexus 360" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": {{ request.base_url|string|tojson }} },
+    { "@type": "ListItem", "position": 2, "name": {{ exam.category|tojson }}, "item": {{ (request.base_url ~ 'category/' ~ exam.category)|tojson }} },
+    { "@type": "ListItem", "position": 3, "name": {{ exam.title|tojson }}, "item": {{ (request.base_url ~ 'exam/' ~ exam.slug)|tojson }} }
+  ]
+}
+</script>
+{% endblock %}
+
 {% block content %}
+{% set share_url = request.base_url ~ 'exam/' ~ exam.slug %}
 {% set display_title = exam.short_title if exam.short_title else (exam.title.split(':')[0] if ':' in exam.title else exam.title) %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
@@ -16,16 +45,10 @@
             <i class="fa-solid fa-arrow-left text-cyan-600 group-hover:-translate-x-1 transition-transform"></i>
             <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
         </a>
-        <div class="flex items-center gap-2">
-            <a href="/category/{{ exam.category }}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-cyan-50 hover:bg-cyan-100 text-cyan-900 font-bold text-xs transition border border-cyan-200">
-                <i class="fa-solid fa-layer-group text-cyan-600 text-xs"></i>
-                <span>{{ exam.category }} श्रेणी</span>
-            </a>
-            <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition border border-slate-200 cursor-pointer">
-                <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
-                <span>Back</span>
-            </button>
-        </div>
+        <a href="/category/{{ exam.category }}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-cyan-50 hover:bg-cyan-100 text-cyan-900 font-bold text-xs transition border border-cyan-200">
+            <i class="fa-solid fa-layer-group text-cyan-600 text-xs"></i>
+            <span>{{ exam.category }} श्रेणी</span>
+        </a>
     </div>
 
     <!-- Breadcrumb Navigation -->
@@ -87,17 +110,17 @@
         <!-- Social Share & Quick Stats -->
         <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
             <div class="flex items-center gap-4">
-                <span><i class="fa-regular fa-calendar-check text-slate-400 mr-1"></i> Updated: {{ exam.updated_at[:10] }}</span>
-                <span><i class="fa-regular fa-eye text-slate-400 mr-1"></i> {{ exam.views_count }} Views</span>
-                <span><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> {{ exam.state or 'All India' }}</span>
+                <span class="whitespace-nowrap"><i class="fa-regular fa-calendar-check text-slate-400 mr-1"></i> Updated: {{ exam.updated_at|human_date }}</span>
+                <span class="whitespace-nowrap"><i class="fa-regular fa-eye text-slate-400 mr-1"></i> {{ exam.views_count }} Views</span>
+                <span class="whitespace-nowrap"><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> {{ exam.state or 'All India' }}</span>
             </div>
 
             <div class="flex items-center gap-2">
                 <span class="font-bold text-slate-700">Share:</span>
-                <a href="https://api.whatsapp.com/send?text={{ exam.title }} - Check Details: https://govt-exam-portal-i3am.onrender.com/exam/{{ exam.slug }}" target="_blank" rel="noopener noreferrer" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs text-xs">
+                <a href="https://api.whatsapp.com/send?text={{ (exam.title ~ ' - ' ~ share_url)|urlencode }}" target="_blank" rel="noopener noreferrer" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs text-xs">
                     <i class="fa-brands fa-whatsapp"></i> WhatsApp
                 </a>
-                <a href="https://t.me/share/url?url=https://govt-exam-portal-i3am.onrender.com/exam/{{ exam.slug }}&text={{ exam.title }}" target="_blank" rel="noopener noreferrer" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs text-xs">
+                <a href="https://t.me/share/url?url={{ share_url|urlencode }}&text={{ exam.title|urlencode }}" target="_blank" rel="noopener noreferrer" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs text-xs">
                     <i class="fa-brands fa-telegram"></i> Telegram
                 </a>
             </div>
@@ -113,11 +136,11 @@
                     सीधे आधिकारिक लिंक (Official Important Links)
                 </h2>
                 <p class="text-xs text-slate-300 mt-0.5">
-                    नीचे दिए गए बटन आपको सीधे आधिकारिक सरकारी पोर्टल (Official Portal) पर ले जाएंगे।
+                    नीचे दिए गए बटन आधिकारिक सरकारी पोर्टल (Official Portal) के लिंक हैं। लिंक उपलब्ध न होने पर स्रोत लिंक दिया गया है।
                 </p>
             </div>
             <span class="text-xs bg-emerald-500/20 text-emerald-300 font-extrabold px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                <i class="fa-solid fa-circle-check text-xs"></i> 100% Direct Official
+                <i class="fa-solid fa-circle-check text-xs"></i> Official Links
             </span>
         </div>
 
@@ -247,6 +270,26 @@
                 </div>
                 <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
             </a>
+            {% endif %}
+
+            {% if not exam.link_apply_online and not exam.link_notification_pdf and not exam.link_admit_card and not exam.link_result and not exam.link_official_website %}
+            <div class="col-span-full bg-slate-800/80 border border-slate-700 text-slate-300 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-white leading-tight">आधिकारिक लिंक अभी उपलब्ध नहीं है</span>
+                        <span class="text-[11px] text-slate-400">यह अपडेट स्रोत से लिया गया है। आधिकारिक पोर्टल पर नोटिफिकेशन जारी होने पर लिंक अपडेट किया जाएगा।</span>
+                    </div>
+                </div>
+                {% if exam.source_url %}
+                <a href="{{ exam.source_url }}" target="_blank" rel="nofollow noopener" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <span>Source Update</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+                {% endif %}
+            </div>
             {% endif %}
 
         </div>
@@ -658,6 +701,21 @@
                         </td>
                     </tr>
                     {% endif %}
+
+                    {% if exam.source_url %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3.5 font-bold text-slate-700 flex items-center gap-2">
+                            <i class="fa-solid fa-newspaper text-slate-500 text-base"></i>
+                            <span>Source Update <span class="text-[10px] font-semibold text-slate-400">(third-party)</span></span>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <a href="{{ exam.source_url }}" target="_blank" rel="nofollow noopener" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs shadow-xs transition">
+                                <span>Read Update</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -727,16 +785,10 @@
             <i class="fa-solid fa-arrow-left text-cyan-600 group-hover:-translate-x-1 transition-transform"></i>
             <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
         </a>
-        <div class="flex items-center gap-2">
-            <a href="/category/{{ exam.category }}" class="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-cyan-50 hover:bg-cyan-100 text-cyan-900 font-bold text-xs sm:text-sm transition border border-cyan-200">
-                <i class="fa-solid fa-layer-group text-cyan-600 text-xs"></i>
-                <span>{{ exam.category }} श्रेणी</span>
-            </a>
-            <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition border border-slate-200 cursor-pointer">
-                <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
-                <span>Back</span>
-            </button>
-        </div>
+        <a href="/category/{{ exam.category }}" class="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-cyan-50 hover:bg-cyan-100 text-cyan-900 font-bold text-xs sm:text-sm transition border border-cyan-200">
+            <i class="fa-solid fa-layer-group text-cyan-600 text-xs"></i>
+            <span>{{ exam.category }} श्रेणी</span>
+        </a>
     </div>
 
 </div>

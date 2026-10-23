@@ -2,9 +2,13 @@ from fastapi import FastAPI, Request, Form, Depends, HTTPException, status, Resp
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from xml.sax.saxutils import escape as xml_escape
+from urllib.parse import quote as url_quote
 import os
 import re
 import asyncio
+import hmac
 from datetime import datetime
 
 from database import (
@@ -19,7 +23,6 @@ from auth import (
 from email_service import send_password_reset_email
 from seed_data import seed
 from auto_scraper import fetch_and_sync_vacancies
-from sarkariexam_scraper import fetch_and_sync_sarkariexam
 from sarkariresult_crawler import sync_from_sarkariresult
 from studygovthelp_scraper import sync_from_studygovthelp
 
@@ -35,28 +38,109 @@ app = FastAPI(title="Sarkari Result Portal", version="2.0.0")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
+
+def _human_date(value):
+    if not value:
+        return ""
+    text = str(value).strip()
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d", "%d/%m/%Y", "%d %B %Y", "%d %b %Y"):
+        try:
+            return datetime.strptime(text, fmt).strftime("%d %b %Y")
+        except ValueError:
+            continue
+    return text[:10]
+
+
+templates.env.filters["human_date"] = _human_date
+
 ENABLE_BACKGROUND_CRAWLER = os.getenv("ENABLE_BACKGROUND_CRAWLER", "false").lower() in ("true", "1", "yes")
+SITE_URL = os.getenv("SITE_URL", "").rstrip("/")
+SYNC_TOKEN = os.getenv("SYNC_TOKEN", "").strip()
+SECRET_ADMIN_PATH = "/portal-boss-secure-2026"
+
+CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; "
+    "img-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; "
+    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+    "script-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'"
+)
+
+def site_base_url(request: Request) -> str:
+    if SITE_URL:
+        return SITE_URL
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+    return f"{proto}://{host}"
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
+    if request.url.path.startswith("/static/"):
+        response.headers.setdefault("Cache-Control", "public, max-age=604800")
+    if request.headers.get("x-forwarded-proto", request.url.scheme) == "https":
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    if request.url.path.startswith(SECRET_ADMIN_PATH):
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+class HeadMethodMiddleware:
+    """Serve HEAD requests with GET headers and no body (FastAPI routes only register GET)."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope["method"] != "HEAD":
+            await self.app(scope, receive, send)
+            return
+        scope = dict(scope)
+        scope["method"] = "GET"
+
+        async def send_without_body(message):
+            if message["type"] == "http.response.body":
+                message = dict(message)
+                message["body"] = b""
+                message["more_body"] = False
+            await send(message)
+
+        await self.app(scope, receive, send_without_body)
+
+app.add_middleware(HeadMethodMiddleware)
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code, headers=exc.headers)
+    if exc.status_code == 404:
+        return templates.TemplateResponse(
+            request=request, name="404.html", context={}, status_code=404
+        )
+    return Response(
+        content=str(exc.detail), status_code=exc.status_code,
+        media_type="text/plain", headers=exc.headers
+    )
 
 # Background worker that automatically polls government sources and cleans expired vacancies
 async def background_vacancy_crawler():
     if not ENABLE_BACKGROUND_CRAWLER:
-        print("[BACKGROUND WORKER] Auto-crawler disabled on free tier to conserve quota and prevent suspension. Use Admin Panel or /api/sync/studygovthelp for on-demand sync.")
+        print("[BACKGROUND WORKER] Disabled. Use the admin automation panel or /api/sync/all with SYNC_TOKEN.")
         return
     # Wait 60 seconds after server starts before first auto-sync
     await asyncio.sleep(60)
     while True:
         try:
-            sync_from_studygovthelp(pages=2, per_page=15)
+            sync_from_studygovthelp(pages=5, per_page=50)
         except Exception as e:
             print(f"[STUDYGOVTHELP CRAWLER ERROR] {e}")
         try:
-            sync_from_sarkariresult(limit_deep_scrape=15)
+            sync_from_sarkariresult(limit_deep_scrape=25)
         except Exception as e:
             print(f"[SARKARIRESULT CRAWLER ERROR] {e}")
-        try:
-            fetch_and_sync_sarkariexam()
-        except Exception as e:
-            print(f"[SARKARIEXAM CRAWLER ERROR] {e}")
         try:
             res = auto_cleanup_expired_exams()
             print(f"[AUTO-LIFECYCLE] Moved to Admit Card: {res.get('moved_to_admit', 0)}, Moved to Result: {res.get('moved_to_result', 0)}, Archived: {res.get('archived', 0)}")
@@ -70,6 +154,10 @@ async def on_startup():
     init_db()
     init_admin()
     seed()
+    try:
+        auto_cleanup_expired_exams()
+    except Exception as e:
+        print(f"[STARTUP LIFECYCLE ERROR] {e}")
     # Start non-blocking background worker
     asyncio.create_task(background_vacancy_crawler())
 
@@ -80,41 +168,57 @@ def get_current_admin(request: Request):
         return None
     return "admin"
 
+def sync_is_authorized(request: Request) -> bool:
+    if get_current_admin(request):
+        return True
+    if not SYNC_TOKEN:
+        return False
+    provided = request.headers.get("x-sync-token") or request.query_params.get("token") or ""
+    return hmac.compare_digest(provided, SYNC_TOKEN)
+
+def require_sync_auth(request: Request):
+    if not sync_is_authorized(request):
+        raise HTTPException(status_code=401, detail="Sync authorization required.")
+
 # ----------------- PUBLIC ROUTES ----------------- #
 
-# API: Manual sync from studygovthelp.in
+# API: Manual sync from studygovthelp.in (admin session or SYNC_TOKEN required)
 @app.post("/api/sync/studygovthelp")
 @app.get("/api/sync/studygovthelp")
-async def api_sync_studygovthelp(pages: int = 2):
+async def api_sync_studygovthelp(request: Request, pages: int = 5):
+    require_sync_auth(request)
+    pages = max(1, min(pages, 20))
     try:
-        result = sync_from_studygovthelp(pages=pages, per_page=20)
+        result = sync_from_studygovthelp(pages=pages, per_page=50)
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
-# API: Manual sync from sarkariresult.com.cm
+# API: Manual sync from sarkariresult.com.cm (admin session or SYNC_TOKEN required)
 @app.post("/api/sync/sarkariresult")
 @app.get("/api/sync/sarkariresult")
-async def api_sync_sarkariresult():
+async def api_sync_sarkariresult(request: Request):
+    require_sync_auth(request)
     try:
-        result = sync_from_sarkariresult(limit_deep_scrape=10)
+        result = sync_from_sarkariresult(limit_deep_scrape=25)
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
-# API: Master 24/7 All-Portals Auto-Sync Endpoint (triggered by Cron / GitHub Actions)
+# API: All-portals sync endpoint (triggered by GitHub Actions with SYNC_TOKEN)
 @app.post("/api/sync/all")
 @app.get("/api/sync/all")
-async def api_sync_all_portals():
+async def api_sync_all_portals(request: Request):
+    require_sync_auth(request)
     results = {}
     try:
-        res_study = sync_from_studygovthelp(pages=2, per_page=15)
+        res_study = sync_from_studygovthelp(pages=5, per_page=50)
         results["studygovthelp"] = res_study
     except Exception as e:
         results["studygovthelp"] = {"status": "error", "message": str(e)}
 
     try:
-        res_sarkari = sync_from_sarkariresult(limit_deep_scrape=8)
+        res_sarkari = sync_from_sarkariresult(limit_deep_scrape=25)
         results["sarkariresult"] = res_sarkari
     except Exception as e:
         results["sarkariresult"] = {"status": "error", "message": str(e)}
@@ -130,9 +234,9 @@ async def api_sync_all_portals():
 # API: Get exams by state (for map interaction)
 @app.get("/api/exams-by-state")
 async def api_exams_by_state(state: str = "All India"):
-    exams = get_all_exams(limit=50)
-    filtered = [dict(e) for e in exams if e['state'] == state or state == 'all']
-    return JSONResponse(content={"state": state, "count": len(filtered), "exams": filtered[:30]})
+    exams = get_all_exams(limit=200, state=state)
+    filtered = [dict(e) for e in exams]
+    return JSONResponse(content={"state": state, "count": len(filtered), "exams": filtered[:50]})
 
 @app.get("/", response_class=HTMLResponse)
 async def home_page(request: Request):
@@ -183,7 +287,7 @@ async def exam_detail_page(request: Request, slug: str):
     return templates.TemplateResponse(
         request=request,
         name="exam_detail.html",
-        context={"exam": exam}
+        context={"exam": exam, "share_url": str(request.url)}
     )
 
 @app.get("/category/{category}", response_class=HTMLResponse)
@@ -230,6 +334,18 @@ async def search_page(request: Request, q: str = "", status: str = "", state: st
             "all_states": all_states
         }
     )
+
+@app.get("/about")
+async def about_redirect():
+    return RedirectResponse(url="/about-us", status_code=status.HTTP_301_MOVED_PERMANENTLY)
+
+@app.get("/contact")
+async def contact_redirect():
+    return RedirectResponse(url="/contact-us", status_code=status.HTTP_301_MOVED_PERMANENTLY)
+
+@app.get("/privacy")
+async def privacy_redirect():
+    return RedirectResponse(url="/privacy-policy", status_code=status.HTTP_301_MOVED_PERMANENTLY)
 
 @app.get("/disclaimer", response_class=HTMLResponse)
 async def disclaimer_page(request: Request):
@@ -284,20 +400,12 @@ async def ads_txt():
 
 @app.get("/robots.txt", response_class=Response)
 async def robots_txt(request: Request):
-    base_url = str(request.base_url).rstrip('/')
+    base_url = site_base_url(request)
     content = f"""User-agent: *
 Allow: /
-Allow: /exam/
-Allow: /category/
-Allow: /search
-Allow: /disclaimer
-Allow: /privacy-policy
-Allow: /about-us
-Allow: /contact-us
-Allow: /terms
-Allow: /ads.txt
-Disallow: /portal-boss-secure-2026/
+Disallow: /api/
 Disallow: /admin
+Disallow: /search
 
 Sitemap: {base_url}/sitemap.xml
 """
@@ -305,35 +413,44 @@ Sitemap: {base_url}/sitemap.xml
 
 @app.get("/sitemap.xml", response_class=Response)
 async def sitemap_xml(request: Request):
-    base_url = str(request.base_url).rstrip('/')
-    exams = get_all_exams(limit=1000)
-    categories = ["Police", "SSC", "Railway", "Teaching", "UPSC", "Banking", "State", "Others"]
-    
+    base_url = site_base_url(request)
+    exams = get_all_exams(limit=5000)
+    categories = sorted({e.get('category') for e in exams if e.get('category')})
+
+    def loc(path: str) -> str:
+        return xml_escape(f"{base_url}{path}", {'"': '&quot;'})
+
     xml_lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-        f'  <url><loc>{base_url}/</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>',
-        f'  <url><loc>{base_url}/privacy-policy</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
-        f'  <url><loc>{base_url}/about-us</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
-        f'  <url><loc>{base_url}/contact-us</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
-        f'  <url><loc>{base_url}/terms</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
-        f'  <url><loc>{base_url}/disclaimer</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>'
+        f'  <url><loc>{loc("/")}</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>',
+        f'  <url><loc>{loc("/privacy-policy")}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+        f'  <url><loc>{loc("/about-us")}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+        f'  <url><loc>{loc("/contact-us")}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+        f'  <url><loc>{loc("/terms")}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+        f'  <url><loc>{loc("/disclaimer")}</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>'
     ]
     for cat in categories:
-        xml_lines.append(f'  <url><loc>{base_url}/category/{cat}</loc><changefreq>daily</changefreq><priority>0.9</priority></url>')
-        
+        xml_lines.append(
+            f'  <url><loc>{loc("/category/" + url_quote(cat, safe=""))}</loc>'
+            f'<changefreq>daily</changefreq><priority>0.9</priority></url>'
+        )
+
     for exam in exams:
         slug = exam.get('slug')
-        if slug:
-            xml_lines.append(f'  <url><loc>{base_url}/exam/{slug}</loc><changefreq>daily</changefreq><priority>0.8</priority></url>')
-        
+        if not slug:
+            continue
+        lastmod = str(exam.get('updated_at') or '')[:10]
+        lastmod_tag = f'<lastmod>{xml_escape(lastmod)}</lastmod>' if re.fullmatch(r'\d{4}-\d{2}-\d{2}', lastmod) else ''
+        xml_lines.append(
+            f'  <url><loc>{loc("/exam/" + url_quote(slug, safe=""))}</loc>{lastmod_tag}'
+            f'<changefreq>daily</changefreq><priority>0.8</priority></url>'
+        )
+
     xml_lines.append('</urlset>')
     return Response(content="\n".join(xml_lines), media_type="application/xml")
 
 # ----------------- SECRET ADMIN ROUTES ----------------- #
-# Custom secret path so public visitors cannot guess or access admin panel
-SECRET_ADMIN_PATH = "/portal-boss-secure-2026"
-
 # Block standard /admin route completely (returns 404 so hackers/visitors see nothing)
 @app.get("/admin")
 @app.get("/admin/{full_path:path}")
@@ -364,7 +481,8 @@ async def admin_login_submit(
             value=token,
             httponly=True,
             max_age=86400, # 24 hours
-            samesite="lax"
+            samesite="lax",
+            secure=request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
         )
         return response
     
@@ -566,7 +684,8 @@ async def admin_automation_center(request: Request, msg: str = None):
         context={
             "stats": stats,
             "logs": logs,
-            "message": msg
+            "message": msg,
+            "background_enabled": ENABLE_BACKGROUND_CRAWLER
         }
     )
 

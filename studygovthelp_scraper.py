@@ -4,7 +4,7 @@ import html
 import re
 import sys
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timedelta
 
 if sys.stdout.encoding != 'utf-8':
     try:
@@ -13,6 +13,7 @@ if sys.stdout.encoding != 'utf-8':
         pass
 
 from database import create_exam, update_exam, exam_exists, get_db, log_sync, init_db
+from data_quality import is_junk_title, normalize_record, clean_title, ensure_slug, parse_date
 
 BASE_URL = "https://studygovthelp.in"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -63,7 +64,9 @@ def detect_category(title: str, board: str = "") -> str:
         return 'State'
 
 def detect_status(title: str, content_text: str = "") -> str:
-    combined = f"{title} {content_text}".lower()
+    # Article bodies mention admit cards/results from other exams; only the
+    # headline is a reliable signal for this post's stage.
+    combined = (title or "").lower()
     if any(k in combined for k in ['admit card', 'hall ticket', 'city intimation', 'city slip', 'exam schedule']):
         return 'Admit Card'
     elif any(k in combined for k in ['result declared', 'score card', 'answer key', 'result out', 'merit list', 'कटऑफ', 'रिजल्ट']):
@@ -239,22 +242,6 @@ def parse_studygovthelp_post(post_data: dict) -> dict:
                 link_result = a_href
 
     # Board fallback
-    if not board_name:
-        if 'rsmssb' in full_text.lower() or 'rsmssb' in title.lower():
-            board_name = 'RSMSSB Rajasthan'
-        elif 'rpsc' in full_text.lower() or 'rpsc' in title.lower():
-            board_name = 'RPSC Rajasthan'
-        elif 'itbp' in full_text.lower() or 'itbp' in title.lower():
-            board_name = 'ITBP Indo-Tibetan Border Police'
-        elif 'echs' in full_text.lower() or 'echs' in title.lower():
-            board_name = 'ECHS Health Scheme'
-        elif 'bser' in full_text.lower() or 'madhyamik shiksha' in full_text.lower():
-            board_name = 'Board of Secondary Education Rajasthan'
-        elif 'ssc' in full_text.lower() or 'ssc' in title.lower():
-            board_name = 'Staff Selection Commission (SSC)'
-        else:
-            board_name = f"{state} Recruitment Board" if state != 'All India' else "Central Government Recruitment"
-
     category = detect_category(title, board_name)
     status = detect_status(title, full_text)
     
@@ -304,13 +291,6 @@ def parse_studygovthelp_post(post_data: dict) -> dict:
     if len(short_desc) > 300:
         short_desc = short_desc[:297] + '...'
 
-    if not link_official_website:
-        link_official_website = link_apply_online or link_notification_pdf or 'https://studygovthelp.in/'
-    if not link_notification_pdf:
-        link_notification_pdf = link_official_website
-    if not link_apply_online and status == 'Applications Open':
-        link_apply_online = link_official_website
-
     return {
         'title': title,
         'slug': slug,
@@ -351,98 +331,125 @@ def parse_studygovthelp_post(post_data: dict) -> dict:
         'content_html': cleaned_html
     }
 
-def sync_from_studygovthelp(pages: int = 3, per_page: int = 20) -> dict:
-    """
-    Automated crawler for studygovthelp.in.
-    Fetches latest recruitment posts via REST API and RSS feeds,
-    parses all details, tables, and links, and synchronizes with portal database.
-    """
+def sync_from_studygovthelp(pages: int = 3, per_page: int = 20, after: str = None) -> dict:
+    """Fetch recruitment posts from the studygovthelp WordPress REST API."""
     init_db()
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print(f"[{now_str}] [STUDYGOVTHELP CRAWLER] Starting sync from studygovthelp.in...")
-    
+
     total_found = 0
     items_added = 0
     items_updated = 0
+    skipped_junk = 0
     added_titles = []
-    
+    seen_urls = set()
+    page_errors = 0
+
     headers = {'User-Agent': USER_AGENT}
-    
+    if not after:
+        after = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%dT%H:%M:%S')
+    pages = max(1, min(int(pages), 20))
+    per_page = max(1, min(int(per_page), 100))
+
     for page in range(1, pages + 1):
         try:
-            api_url = f"{BASE_URL}/wp-json/wp/v2/posts?page={page}&per_page={per_page}"
-            resp = requests.get(api_url, headers=headers, timeout=15)
+            api_url = f"{BASE_URL}/wp-json/wp/v2/posts"
+            resp = requests.get(
+                api_url,
+                params={'page': page, 'per_page': per_page, 'after': after},
+                headers=headers,
+                timeout=60,
+            )
+            if resp.status_code == 400:
+                print(f"[STUDYGOVTHELP] No more pages after page {page - 1}.")
+                break
             if resp.status_code != 200:
+                page_errors += 1
                 print(f"[STUDYGOVTHELP] Page {page} returned status {resp.status_code}, stopping.")
                 break
-                
+
             posts = resp.json()
             if not isinstance(posts, list) or len(posts) == 0:
                 break
-                
+
             total_found += len(posts)
-            
+
             for p in posts:
-                parsed = parse_studygovthelp_post(p)
-                title = parsed['title']
-                slug = parsed['slug']
-                source_url = parsed['source_url']
-                
-                # Check if exists
-                if exam_exists(slug=slug, title=title, source_url=source_url):
-                    # Update content_html and latest dates if already in DB
-                    try:
-                        conn = get_db()
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT id FROM exams WHERE slug = ? OR source_url = ?", (slug, source_url))
-                        row = cursor.fetchone()
-                        if row:
-                            exam_id = row[0]
-                            update_exam(exam_id, parsed)
-                            items_updated += 1
-                        conn.close()
+                try:
+                    link = (p.get('link') or '').strip()
+                    if link:
+                        seen_urls.add(link)
+                    parsed = parse_studygovthelp_post(p)
+                    title = clean_title(parsed.get('title', ''))
+                    if not title or is_junk_title(title):
+                        skipped_junk += 1
                         continue
-                    except Exception as e:
-                        print(f"Notice on updating existing record: {e}")
+
+                    source_url = parsed.get('source_url') or ''
+                    parsed['slug'] = ensure_slug(title, parsed.get('slug', ''))
+                    parsed = normalize_record(parsed, cap_content=True)
+
+                    # Never overwrite good existing dates/links with placeholders.
+                    conn = get_db()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT id FROM exams WHERE slug = ? OR source_url = ?", (parsed['slug'], source_url))
+                    existing = cursor.fetchone()
+                    conn.close()
+
+                    if existing:
+                        payload = {
+                            'title': parsed['title'],
+                            'category': parsed['category'],
+                            'state': parsed['state'],
+                            'board_name': parsed['board_name'],
+                            'department': parsed['department'],
+                            'short_description': parsed['short_description'],
+                            'status': parsed['status'],
+                            'total_vacancies': parsed['total_vacancies'],
+                            'source_url': source_url,
+                            'is_auto_synced': 1,
+                        }
+                        for field in ('notification_date', 'apply_start_date', 'apply_last_date', 'exam_date'):
+                            if parse_date(parsed.get(field)):
+                                payload[field] = parsed[field]
+                        for field in (
+                            'link_apply_online', 'link_notification_pdf', 'link_admit_card',
+                            'link_answer_key', 'link_result', 'link_official_website',
+                        ):
+                            if parsed.get(field):
+                                payload[field] = parsed[field]
+                        if len(parsed.get('content_html') or '') > 800:
+                            payload['content_html'] = parsed['content_html']
+                        if len(parsed.get('eligibility_criteria') or '') > 40:
+                            payload['eligibility_criteria'] = parsed['eligibility_criteria']
+                        if len(parsed.get('selection_process') or '') > 40:
+                            payload['selection_process'] = parsed['selection_process']
+                        if len(parsed.get('how_to_apply') or '') > 60:
+                            payload['how_to_apply'] = parsed['how_to_apply']
+                        update_exam(existing[0], payload)
+                        items_updated += 1
                         continue
-                # Filter out non-recruitment junk articles (e.g. elections, voter list, aadhar, pure stubs)
-                t_lower = title.lower()
-                JUNK_FILTER = [
-                    'chunav', 'चुनाव', 'voter', 'वोटर', 'ballot', 'मतपत्र', 'aadhar', 'आधार',
-                    'sim number', 'सिम', 'bhatta', 'भत्ता', 'ration', 'राशन',
-                    'board 10th', 'board 12th', 'scholarship', 'छात्रवृत्ति',
-                    'sarpanch', 'सरपंच', 'वार्ड पंच'
-                ]
-                if any(k in t_lower for k in JUNK_FILTER):
-                    print(f"  [-] Skipping non-recruitment article: {title}")
-                    continue
 
-                # Skip stub articles that have neither fees nor application dates
-                fee_gen_clean = (parsed.get('fee_general') or '').lower()
-                apply_last_clean = (parsed.get('apply_last_date') or '').lower()
-                apply_start_clean = (parsed.get('apply_start_date') or '').lower()
-                if ('as per notification' in fee_gen_clean or 'check official' in fee_gen_clean) and \
-                   ('check official' in apply_last_clean or 'check official' in apply_start_clean):
-                    print(f"  [-] Skipping stub/news article with incomplete data: {title}")
-                    continue
-                
-                base_slug = parsed['slug']
-                s_counter = 1
-                while exam_exists(parsed['slug']):
-                    parsed['slug'] = f"{base_slug}-{s_counter}"
-                    s_counter += 1
+                    base_slug = parsed['slug']
+                    s_counter = 1
+                    while exam_exists(parsed['slug']):
+                        parsed['slug'] = f"{base_slug}-{s_counter}"
+                        s_counter += 1
 
-                create_exam(parsed)
-                items_added += 1
-                added_titles.append(f"{title} ({parsed['state']})")
-                print(f"  [+] Synced from studygovthelp.in: {title} [{parsed['state']}]")
-                
+                    create_exam(parsed)
+                    items_added += 1
+                    added_titles.append(f"{title} ({parsed['state']})")
+                    print(f"  [+] Synced from studygovthelp.in: {title} [{parsed['state']}]")
+                except Exception as item_error:
+                    print(f"  [!] Could not process post: {item_error}")
+
         except Exception as e:
+            page_errors += 1
             print(f"[STUDYGOVTHELP CRAWLER ERROR] Page {page} failed: {e}")
             break
 
-    status = "SUCCESS"
-    msg = f"studygovthelp.in Auto-Sync completed! {total_found} posts examined, {items_added} new posts added, {items_updated} updated."
+    status = "PARTIAL" if page_errors else "SUCCESS"
+    msg = f"studygovthelp.in sync: {total_found} posts examined, {items_added} new, {items_updated} updated, {skipped_junk} non-recruitment skipped."
     if added_titles:
         msg += f" New posts: {', '.join(added_titles[:3])}"
         if len(added_titles) > 3:
@@ -456,8 +463,11 @@ def sync_from_studygovthelp(pages: int = 3, per_page: int = 20) -> dict:
         'items_found': total_found,
         'items_added': items_added,
         'items_updated': items_updated,
-        'message': msg
+        'skipped_junk': skipped_junk,
+        'page_errors': page_errors,
+        'message': msg,
+        '_seen_urls': sorted(seen_urls),
     }
 
 if __name__ == '__main__':
-    sync_from_studygovthelp(pages=2, per_page=15)
+    sync_from_studygovthelp(pages=3, per_page=20)

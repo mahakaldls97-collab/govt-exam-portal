@@ -1,15 +1,27 @@
 import sqlite3
 import os
+import re
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from data_quality import CANONICAL_STATUSES, parse_date, canonical_status
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def now_ist_str():
+    # Syncs run on GitHub/Vercel (UTC) and locally (IST); pin IST so
+    # updated_at ordering does not flip with the host timezone.
+    return datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ORIGINAL_DB = os.path.join(BASE_DIR, "portal.db")
 
 # In serverless environments (like Vercel), the deployment root is read-only.
 # We copy portal.db to /tmp/portal.db so SQLite can execute reads and writes without error.
-if os.getenv("VERCEL") or not os.access(BASE_DIR, os.W_OK):
+_override_db = os.getenv("PORTAL_DB_PATH", "").strip()
+if _override_db:
+    DB_PATH = os.path.abspath(_override_db)
+elif os.getenv("VERCEL") or not os.access(BASE_DIR, os.W_OK):
     DB_PATH = os.path.join(tempfile.gettempdir(), "portal.db")
     if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
         if os.path.exists(ORIGINAL_DB):
@@ -17,9 +29,16 @@ if os.getenv("VERCEL") or not os.access(BASE_DIR, os.W_OK):
 else:
     DB_PATH = ORIGINAL_DB
 
+def _word_match(haystack, needle):
+    if not haystack or not needle:
+        return 0
+    pattern = r"(?<![A-Za-z0-9])" + re.escape(str(needle)) + r"(?![A-Za-z0-9])"
+    return 1 if re.search(pattern, str(haystack), re.IGNORECASE) else 0
+
 def get_db():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    conn.create_function("word_match", 2, _word_match)
     return conn
 
 def init_db():
@@ -91,6 +110,7 @@ def init_db():
         source_url TEXT DEFAULT '',
         state TEXT DEFAULT 'All India',
         content_html TEXT DEFAULT '',
+        source_checked_at TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
@@ -135,6 +155,10 @@ def init_db():
         pass
     try:
         cursor.execute("ALTER TABLE exams ADD COLUMN fee_refund_note TEXT DEFAULT ''")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE exams ADD COLUMN source_checked_at TEXT DEFAULT ''")
     except Exception:
         pass
     
@@ -202,29 +226,41 @@ def get_all_exams(limit=100, category=None, search=None, status=None, state=None
     query = "SELECT * FROM exams WHERE 1=1"
     params = []
     
-    # Hide archived/expired vacancies from public view by default
+    # Hide only archived/expired vacancies. Closed applications stay visible
+    # with an accurate "Applications Closed" badge until they are archived.
     if hide_expired:
         query += " AND status NOT IN ('Archived', 'Expired')"
     
     if category and category.lower() != 'all':
         cat_clean = category.lower().replace("-", " ").strip()
         if cat_clean in ('results', 'result', 'परिणाम'):
-            query += " AND (status LIKE '%Result%' OR LOWER(category) = 'results')"
+            query += " AND status IN ('Result', 'Answer Key')"
         elif cat_clean in ('admit card', 'admit cards', 'admit', 'प्रवेश पत्र'):
-            query += " AND (status LIKE '%Admit%' OR LOWER(category) = 'admit card')"
+            query += " AND status = 'Admit Card'"
         elif cat_clean in ('latest jobs', 'latest job', 'jobs', 'latest', 'ऑनलाइन फॉर्म', 'job'):
-            query += " AND (status LIKE '%Open%' OR status LIKE '%Active%' OR (status NOT LIKE '%Result%' AND status NOT LIKE '%Admit%'))"
+            query += " AND status IN ('Applications Open', 'Upcoming')"
         elif cat_clean in ('answer key', 'answer keys', 'answer', 'उत्तर कुंजी'):
-            query += " AND (status LIKE '%Answer Key%' OR LOWER(category) = 'answer key' OR title LIKE '%Answer Key%')"
+            query += " AND (status = 'Answer Key' OR title LIKE '%Answer Key%' OR title LIKE '%उत्तर कुंजी%')"
         elif cat_clean in ('syllabus', 'exam pattern', 'पाठ्यक्रम'):
-            query += " AND (syllabus_summary IS NOT NULL AND length(syllabus_summary) > 5 OR title LIKE '%Syllabus%')"
+            query += " AND (syllabus_summary IS NOT NULL AND length(syllabus_summary) > 5 OR title LIKE '%Syllabus%' OR title LIKE '%पाठ्यक्रम%')"
         else:
             query += " AND LOWER(category) = LOWER(?)"
             params.append(category)
         
     if status:
-        query += " AND status LIKE ?"
-        params.append(f"%{status}%")
+        status_clean = status.strip()
+        alias = {
+            'open': 'Applications Open', 'active': 'Applications Open',
+            'result declared': 'Result', 'results': 'Result',
+            'admit card released': 'Admit Card', 'admit card / exam': 'Admit Card',
+            'upcoming notification': 'Upcoming', 'answer key released': 'Answer Key',
+        }.get(status_clean.lower(), status_clean)
+        if alias in CANONICAL_STATUSES:
+            query += " AND status = ?"
+            params.append(alias)
+        else:
+            query += " AND status LIKE ?"
+            params.append(f"%{status_clean}%")
 
     if state and state.lower() != 'all':
         query += " AND (LOWER(state) = LOWER(?) OR LOWER(state) LIKE ?)"
@@ -234,9 +270,11 @@ def get_all_exams(limit=100, category=None, search=None, status=None, state=None
         query += " AND is_featured = 1"
         
     if search:
-        query += " AND (title LIKE ? OR board_name LIKE ? OR category LIKE ? OR state LIKE ? OR short_description LIKE ? OR keywords LIKE ?)"
-        term = f"%{search}%"
-        params.extend([term, term, term, term, term, term])
+        query += (" AND (word_match(title, ?) OR word_match(board_name, ?) OR word_match(category, ?)"
+                  " OR word_match(state, ?) OR word_match(short_description, ?) OR word_match(keywords, ?)"
+                  " OR word_match(post_name, ?) OR word_match(advt_no, ?))")
+        term = search.strip()
+        params.extend([term] * 8)
         
     query += " ORDER BY updated_at DESC LIMIT ?"
     params.append(limit)
@@ -253,7 +291,8 @@ def get_all_states():
     cursor.execute("""
         SELECT state, COUNT(*) as count 
         FROM exams 
-        WHERE state IS NOT NULL AND state != '' 
+        WHERE state IS NOT NULL AND state != ''
+          AND status NOT IN ('Archived', 'Expired')
         GROUP BY state 
         ORDER BY count DESC
     """)
@@ -306,11 +345,16 @@ def create_exam(data):
         'how_to_apply', 'link_apply_online', 'link_notification_pdf', 'link_admit_card',
         'link_answer_key', 'link_result', 'link_official_website', 'link_previous_papers',
         'meta_title', 'meta_description', 'keywords', 'is_featured', 'is_auto_synced', 'source_url', 'state', 'content_html',
-        'short_title', 'post_name', 'department', 'advt_no', 'pay_level', 'fee_refund_note'
+        'short_title', 'post_name', 'department', 'advt_no', 'pay_level', 'fee_refund_note',
+        'created_at', 'updated_at'
     ]
     
     if not data.get('state'):
         data['state'] = 'All India'
+
+    now = now_ist_str()
+    data.setdefault('created_at', now)
+    data.setdefault('updated_at', now)
         
     status = data.get('status', 'Applications Open')
     if 'Open' in status or 'Active' in status:
@@ -347,7 +391,7 @@ def create_exam(data):
 def update_exam(exam_id, data):
     conn = get_db()
     cursor = conn.cursor()
-    columns = [
+    allowed_columns = [
         'title', 'slug', 'category', 'board_name', 'total_vacancies', 'short_description',
         'status', 'badge_color', 'notification_date', 'apply_start_date', 'apply_last_date',
         'fee_last_date', 'correction_last_date', 'admit_card_date', 'exam_date', 'result_date',
@@ -356,27 +400,35 @@ def update_exam(exam_id, data):
         'how_to_apply', 'link_apply_online', 'link_notification_pdf', 'link_admit_card',
         'link_answer_key', 'link_result', 'link_official_website', 'link_previous_papers',
         'meta_title', 'meta_description', 'keywords', 'is_featured', 'state', 'content_html',
-        'short_title', 'post_name', 'department', 'advt_no', 'pay_level', 'fee_refund_note'
+        'short_title', 'post_name', 'department', 'advt_no', 'pay_level', 'fee_refund_note',
+        'source_url', 'is_auto_synced'
     ]
-    
-    status = data.get('status', 'Applications Open')
-    if 'Open' in status or 'Active' in status:
-        badge_color = 'emerald'
-    elif 'Admit Card' in status:
-        badge_color = 'blue'
-    elif 'Result' in status:
-        badge_color = 'amber'
-    elif 'Answer Key' in status:
-        badge_color = 'purple'
-    elif 'Upcoming' in status:
-        badge_color = 'indigo'
-    else:
-        badge_color = 'rose'
-    data['badge_color'] = badge_color
-    
+    columns = [col for col in allowed_columns if col in data]
+    if not columns:
+        conn.close()
+        return
+
+    if 'status' in data:
+        status = data.get('status') or 'Applications Open'
+        if 'Open' in status or 'Active' in status:
+            badge_color = 'emerald'
+        elif 'Admit Card' in status:
+            badge_color = 'blue'
+        elif 'Result' in status:
+            badge_color = 'amber'
+        elif 'Answer Key' in status:
+            badge_color = 'purple'
+        elif 'Upcoming' in status:
+            badge_color = 'indigo'
+        else:
+            badge_color = 'gray'
+        if 'badge_color' not in data:
+            data['badge_color'] = badge_color
+            columns.append('badge_color')
+
     set_clause = ", ".join([f"{col} = ?" for col in columns])
     values = [data.get(col, '') for col in columns]
-    values.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    values.append(now_ist_str())
     values.append(exam_id)
     
     cursor.execute(f"UPDATE exams SET {set_clause}, updated_at = ? WHERE id = ?", values)
@@ -420,16 +472,16 @@ def get_sync_logs(limit=15):
 def get_stats():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM exams")
+    cursor.execute("SELECT COUNT(*) FROM exams WHERE status NOT IN ('Archived', 'Expired')")
     total_exams = cursor.fetchone()[0]
     
-    cursor.execute("SELECT COUNT(*) FROM exams WHERE status LIKE '%Open%' OR status LIKE '%Active%'")
+    cursor.execute("SELECT COUNT(*) FROM exams WHERE status = 'Applications Open'")
     active_applications = cursor.fetchone()[0]
     
-    cursor.execute("SELECT COUNT(*) FROM exams WHERE status LIKE '%Admit Card%'")
+    cursor.execute("SELECT COUNT(*) FROM exams WHERE status = 'Admit Card'")
     admit_cards = cursor.fetchone()[0]
     
-    cursor.execute("SELECT COUNT(*) FROM exams WHERE status LIKE '%Result%'")
+    cursor.execute("SELECT COUNT(*) FROM exams WHERE status IN ('Result', 'Answer Key')")
     results = cursor.fetchone()[0]
     
     cursor.execute("SELECT COUNT(*) FROM exams WHERE is_auto_synced = 1")
@@ -454,203 +506,87 @@ def get_stats():
     }
 
 def auto_cleanup_expired_exams():
-    """
-    Intelligent 3-Stage Recruitment Lifecycle Management:
-    Stage 1: 'Applications Open' -> While apply_last_date is active.
-    Stage 2: When apply_last_date has passed -> Moves to 'Admit Card / Exam' (badge: 'blue')
-             so candidates can still access Admit Card and Exam details!
-    Stage 3: When exam_date has passed -> Moves to 'Result / Answer Key' (badge: 'amber').
-    Stage 4: When recruitment is completely over (> 30 days after result OR > 90 days old) ->
-             Status becomes 'Archived' (hidden from active listings).
+    """Refresh statuses from real dates and archive very old updates.
+
+    Applications Open -> Upcoming -> Admit Card -> Result -> Archived.
+    Title keywords always win (an update titled "Result" is never reopened).
     """
     conn = get_db()
     cursor = conn.cursor()
-    now = datetime.now()
+    now = datetime.now(IST)
+    today = now.date()
+    stamp = now.strftime('%Y-%m-%d %H:%M:%S')
     moved_to_admit = 0
     moved_to_result = 0
     archived = 0
-    
-    # 1. First, revive any mistakenly 'Expired' exams back to 'Admit Card / Exam'
-    cursor.execute("""
-        UPDATE exams SET status = 'Admit Card / Exam', badge_color = 'blue'
-        WHERE status = 'Expired'
-    """)
-    if cursor.rowcount > 0:
-        moved_to_admit += cursor.rowcount
-        print(f"  [LIFECYCLE] Re-activated {cursor.rowcount} exams to 'Admit Card / Exam' stage.")
 
-    # 2. Check all active exams
     cursor.execute("""
-        SELECT id, title, apply_last_date, exam_date, result_date, created_at, status 
-        FROM exams 
-        WHERE status NOT IN ('Archived')
+        SELECT id, title, status, apply_start_date, apply_last_date, exam_date,
+               result_date, notification_date
+        FROM exams
+        WHERE status != 'Archived'
     """)
     rows = cursor.fetchall()
-    
+
     for row in rows:
         exam = dict(row)
-        curr_status = exam.get('status', '')
-        last_date_str = exam.get('apply_last_date', '') or ''
-        exam_date_str = exam.get('exam_date', '') or ''
-        result_date_str = exam.get('result_date', '') or ''
-        created_str = str(exam.get('created_at', ''))[:19]
-        
-        apply_passed = False
-        exam_passed = False
-        result_passed = False
-        days_since_result = 0
-        
-        # Helper to parse dates
-        def parse_date(d_str):
-            if not d_str or d_str in ['Check Official Portal', 'As per official notification', 'Various', 'N/A', '']:
-                return None
-            import re
-            cleaned = re.sub(r'\(.*?\)', '', str(d_str)).strip()
-            # Handle multiple dates like '23, 24, 25 & 26 October 2026' -> '26 October 2026'
-            m = re.search(r'(\d{1,2}\s+[A-Za-z]+\s+\d{4})', cleaned)
-            if m:
-                cleaned = m.group(1)
-            for fmt in ['%d %B %Y', '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%d %b %Y', '%B %Y', '%b %Y']:
-                try:
-                    return datetime.strptime(cleaned.strip(), fmt)
-                except ValueError:
-                    continue
-            return None
-            
-        last_dt = parse_date(last_date_str)
-        exam_dt = parse_date(exam_date_str)
-        result_dt = parse_date(result_date_str)
-        
-        if last_dt and last_dt < now:
-            apply_passed = True
-        if exam_dt and exam_dt < now:
-            exam_passed = True
-        if result_dt and result_dt < now:
-            result_passed = True
-            days_since_result = (now - result_dt).days
-            
-        days_old = 0
-        if created_str:
-            try:
-                created_dt = datetime.strptime(created_str, '%Y-%m-%d %H:%M:%S')
-                days_old = (now - created_dt).days
-            except Exception:
-                pass
+        current = exam.get('status') or ''
+        title = exam.get('title') or ''
+        title_low = title.lower()
+        explicit = any(k in title_low for k in (
+            'result', 'रिजल्ट', 'merit list', 'score card', 'scorecard', 'cut off', 'cutoff',
+            'answer key', 'admit card', 'hall ticket', 'city intimation', 'final list',
+        ))
 
-        # Guard against misclassifying specific title types:
-        t = exam.get('title', '').lower()
-        is_explicit_admit = any(k in t for k in ['admit card', 'exam city', 'city intimation', 'hall ticket', 'call letter', 'cbtst'])
-        is_explicit_result = any(k in t for k in ['result', 'answer key', 'cut off', 'merit list', 'score card', 'dv schedule', 'allotment'])
+        new_status = canonical_status(
+            current, title,
+            exam.get('apply_start_date') or '',
+            exam.get('apply_last_date') or '',
+            exam.get('exam_date') or '',
+            exam.get('result_date') or '',
+            exam.get('notification_date') or '',
+            today=today,
+        )
 
-        # Stage 4: Archive if result declared > 30 days ago OR created > 90 days ago with apply_passed
-        # But NEVER archive if the exam date is in the future!
-        if (result_passed and days_since_result > 30) or (apply_passed and days_old > 90 and not (exam_dt and exam_dt >= now)):
-            if curr_status != 'Archived':
-                cursor.execute("UPDATE exams SET status = 'Archived', badge_color = 'gray', updated_at = ? WHERE id = ?",
-                               (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
-                archived += 1
-                print(f"  [LIFECYCLE -> ARCHIVED] {exam['title']}")
-                continue
-                
-        # Stage 3: Result / Answer Key (if exam has already taken place) - ONLY for general recruitment posts
-        if exam_passed and curr_status not in ['Result Declared', 'Result / Answer Key', 'Archived'] and not is_explicit_admit:
-            cursor.execute("UPDATE exams SET status = 'Result / Answer Key', badge_color = 'amber', updated_at = ? WHERE id = ?",
-                           (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
-            moved_to_result += 1
-            print(f"  [LIFECYCLE -> RESULT] {exam['title']}")
+        last_dt = parse_date(exam.get('apply_last_date'))
+        exam_dt = parse_date(exam.get('exam_date'))
+        result_dt = parse_date(exam.get('result_date'))
+        known_dates = [d for d in (
+            result_dt, exam_dt, last_dt, parse_date(exam.get('notification_date')),
+        ) if d]
+        latest_known = max(known_dates) if known_dates else None
+
+        if explicit and latest_known and (today - latest_known).days > 365:
+            new_status = 'Archived'
+        elif (not explicit and last_dt and (today - last_dt).days > 180
+              and (not exam_dt or exam_dt < today)):
+            new_status = 'Archived'
+
+        if new_status == current:
             continue
-            
-        # Stage 2: Form closed -> Move to 'Admit Card / Exam' (so applicants can download admit cards)
-        if apply_passed and curr_status in ['Applications Open', 'Upcoming Notification', 'Upcoming'] and not is_explicit_result:
-            cursor.execute("UPDATE exams SET status = 'Admit Card / Exam', badge_color = 'blue', updated_at = ? WHERE id = ?",
-                           (now.strftime('%Y-%m-%d %H:%M:%S'), exam['id']))
+
+        badge = {
+            'Applications Open': 'emerald', 'Applications Closed': 'slate',
+            'Upcoming': 'indigo', 'Admit Card': 'blue',
+            'Answer Key': 'purple', 'Result': 'amber', 'Syllabus': 'teal',
+            'Archived': 'gray',
+        }.get(new_status, 'slate')
+        cursor.execute(
+            "UPDATE exams SET status = ?, badge_color = ?, updated_at = ? WHERE id = ?",
+            (new_status, badge, stamp, exam['id'])
+        )
+        if new_status == 'Admit Card':
             moved_to_admit += 1
-            print(f"  [LIFECYCLE -> ADMIT CARD / EXAM] {exam['title']}")
-    
+        elif new_status in ('Result', 'Answer Key'):
+            moved_to_result += 1
+        elif new_status == 'Archived':
+            archived += 1
+
     conn.commit()
     conn.close()
-
-    # Automatically synchronize exam dates from latest announcements
-    dates_synced = auto_propagate_exam_dates()
-
     return {
         'moved_to_admit': moved_to_admit,
         'moved_to_result': moved_to_result,
         'archived': archived,
-        'dates_synced': dates_synced
+        'dates_synced': 0,
     }
-
-def auto_propagate_exam_dates() -> int:
-    """
-    Intelligent Auto-Date Synchronizer:
-    Automatically updates parent recruitment dates whenever new exam dates or admit card
-    announcements are discovered in the portal, so the admin NEVER has to manually update them.
-    """
-    conn = get_db()
-    cursor = conn.cursor()
-    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    updated_count = 0
-
-    MATCH_PATTERNS = [
-        ('ctet', ['ctet']),
-        ('ssc cgl', ['ssc cgl', 'cgl 2026', 'combined graduate level']),
-        ('ssc chsl', ['ssc chsl', 'chsl 2026', '10+2']),
-        ('ssc mts', ['ssc mts', 'mts 2026', 'havaldar']),
-        ('ssc gd', ['ssc gd', 'constable gd']),
-        ('rrb ntpc', ['rrb ntpc', 'ntpc 2026', 'ntpc']),
-        ('rrb alp', ['rrb alp', 'assistant loco pilot']),
-        ('rrb technician', ['rrb technician', 'technician']),
-        ('rpf constable', ['rpf constable', 'railway protection force']),
-        ('up police constable', ['up police constable', 'uppbpb']),
-        ('rajasthan cet 12th', ['cet 12th', 'cet सीनियर सेकेंडरी', 'cet 10+2']),
-        ('rajasthan cet graduate', ['cet स्नातक', 'cet graduate']),
-        ('reet', ['reet 2026', 'reet exam']),
-        ('ibps po', ['ibps po', 'crp po']),
-        ('ibps clerk', ['ibps clerk', 'crp clerk']),
-        ('sbi clerk', ['sbi clerk', 'junior associate']),
-        ('sbi po', ['sbi po', 'probationary officer'])
-    ]
-
-    cursor.execute("""
-        SELECT id, title, exam_date, admit_card_date
-        FROM exams 
-        WHERE LOWER(exam_date) NOT IN ('as per schedule', 'check official portal', '', 'बाद में सूचित की जाएगी', 'various', 'n/a')
-              AND (exam_date LIKE '%2026%' OR exam_date LIKE '%2025%' OR exam_date LIKE '%2027%'
-                   OR exam_date LIKE '%जनवरी%' OR exam_date LIKE '%फरवरी%' OR exam_date LIKE '%मार्च%'
-                   OR exam_date LIKE '%अप्रैल%' OR exam_date LIKE '%मई%' OR exam_date LIKE '%जून%'
-                   OR exam_date LIKE '%जुलाई%' OR exam_date LIKE '%अगस्त%' OR exam_date LIKE '%सितंबर%'
-                   OR exam_date LIKE '%अक्टूबर%' OR exam_date LIKE '%नवंबर%' OR exam_date LIKE '%दिसंबर%')
-        ORDER BY id DESC LIMIT 300
-    """)
-    update_rows = cursor.fetchall()
-
-    for pattern_key, keywords in MATCH_PATTERNS:
-        latest_exam_date = None
-        for u in update_rows:
-            u_title = u['title'].lower()
-            if any(kw in u_title for kw in keywords):
-                ed = u['exam_date']
-                if ed and len(ed) < 60:
-                    latest_exam_date = ed
-                    break
-        
-        if latest_exam_date:
-            cursor.execute("SELECT id, title, exam_date, status FROM exams WHERE id <= 100")
-            for parent in cursor.fetchall():
-                p_title = parent['title'].lower()
-                if any(kw in p_title for kw in keywords):
-                    if parent['exam_date'] != latest_exam_date:
-                        cursor.execute("""
-                            UPDATE exams 
-                            SET exam_date = ?, 
-                                status = 'Admit Card / Exam',
-                                badge_color = 'blue',
-                                updated_at = ?
-                            WHERE id = ?
-                        """, (latest_exam_date, now_str, parent['id']))
-                        updated_count += 1
-                        print(f"  [AUTO-DATE SYNC] Updated {parent['title']} -> Exam Date: {latest_exam_date}")
-
-    conn.commit()
-    conn.close()
-    return updated_count

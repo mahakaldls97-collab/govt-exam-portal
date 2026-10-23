@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Search: {{ search_query }} - SarkariNexus 360{% endblock %}
+{% block title %}Search: {{ search_query or 'All Exams' }} - SarkariNexus 360{% endblock %}
+
+{% block robots %}noindex,follow{% endblock %}
+
+{% block canonical %}{{ request.base_url }}search{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
     <!-- Top Navigation Bar -->
-    <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+    <div class="pt-1">
         <a href="/" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs sm:text-sm border border-slate-200 shadow-xs hover:shadow transition group">
             <i class="fa-solid fa-arrow-left text-cyan-600 group-hover:-translate-x-1 transition-transform"></i>
             <span>← मुख्य पेज पर वापस जाएं (Back to Home)</span>
         </a>
-        <button onclick="window.history.back()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition border border-slate-200 cursor-pointer">
-            <i class="fa-solid fa-rotate-left text-slate-500 text-xs"></i>
-            <span>Back</span>
-        </button>
     </div>
 
     <!-- Search Box Header -->
