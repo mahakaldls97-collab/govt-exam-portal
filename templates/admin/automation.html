@@ -56,11 +56,18 @@
                 <i class="fa-solid fa-clock-rotate-left"></i>
             </div>
             <div>
-                <span class="block text-xs font-semibold text-slate-400">Background Sync Status</span>
+                <span class="block text-xs font-semibold text-slate-400">Automation Mode</span>
+                {% if background_enabled %}
                 <span class="text-sm font-black text-emerald-600 flex items-center gap-1.5 mt-0.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Active (Every 1 Hour)
+                    Background worker ON
                 </span>
+                {% else %}
+                <span class="text-sm font-black text-amber-600 flex items-center gap-1.5 mt-0.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    Manual sync only
+                </span>
+                {% endif %}
             </div>
         </div>
 
@@ -85,11 +92,21 @@
         </div>
     </div>
 
+    <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed flex items-start gap-2.5">
+        <i class="fa-solid fa-circle-info text-amber-600 text-base mt-0.5"></i>
+        <p>
+            Vercel ke live server par sync temporary storage me save hota hai. Permanent update ke liye
+            GitHub Action (har 6 ghante) ya local
+            <code class="font-mono bg-amber-100 px-1 rounded">python sync_runner.py</code>
+            chalayein; yah database ko repo me commit karta hai aur Vercel naya build leta hai.
+        </p>
+    </div>
+
     <!-- Active Government Sources Monitored -->
     <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
         <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-satellite-dish text-blue-600"></i>
-            Monitored Official Sources & Feeds (सक्रिय सरकारी स्रोत)
+            Data Sources & Official Portals (डेटा स्रोत)
         </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
@@ -99,7 +116,7 @@
                     <span class="text-[11px] text-blue-700">studygovthelp.in</span>
                 </div>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span> Live REST API
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span> Third-party feed
                 </span>
             </div>
 
@@ -108,7 +125,7 @@
                     <span class="font-bold text-slate-800 block">SSC (Staff Selection)</span>
                     <span class="text-[11px] text-slate-500">ssc.gov.in</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
@@ -116,7 +133,7 @@
                     <span class="font-bold text-slate-800 block">UPSC Civil Services</span>
                     <span class="text-[11px] text-slate-500">upsc.gov.in</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
@@ -124,7 +141,7 @@
                     <span class="font-bold text-slate-800 block">Railway RRB / RRC</span>
                     <span class="text-[11px] text-slate-500">rrbapply.gov.in</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
@@ -132,7 +149,7 @@
                     <span class="font-bold text-slate-800 block">National Career Service</span>
                     <span class="text-[11px] text-slate-500">ncs.gov.in (MoL&E)</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
@@ -140,7 +157,7 @@
                     <span class="font-bold text-slate-800 block">Teaching (CTET / REET)</span>
                     <span class="text-[11px] text-slate-500">ctet.nic.in / BSER</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
@@ -148,7 +165,7 @@
                     <span class="font-bold text-slate-800 block">Banking (IBPS & SBI)</span>
                     <span class="text-[11px] text-slate-500">ibps.in / sbi.co.in</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
@@ -156,7 +173,7 @@
                     <span class="font-bold text-slate-800 block">State Police (UP, Bihar, Raj)</span>
                     <span class="text-[11px] text-slate-500">uppbpb.gov.in / BPSC</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
@@ -164,7 +181,7 @@
                     <span class="font-bold text-slate-800 block">Defense (Air Force / Navy)</span>
                     <span class="text-[11px] text-slate-500">agnipathvayu.cdac.in</span>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Connected</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Official Link</span>
             </div>
         </div>
     </div>

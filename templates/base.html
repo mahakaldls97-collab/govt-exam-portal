@@ -3,42 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SarkariNexus 360™ - India's #1 3D Government Exam & Recruitment Portal 2026{% endblock %}</title>
-    <meta name="description" content="{% block meta_description %}SarkariNexus 360 - India's premier 3D government exam intelligence portal. Live notifications, direct official apply links, admit cards, and results.{% endblock %}">
-    <meta name="keywords" content="{% block keywords %}SarkariNexus, Sarkari Result, Sarkari Bharti 2026, Government Jobs 2026, Admit Card, Online Form, Results, StudyGovtHelp{% endblock %}">
-    
-    <!-- Tailwind CSS with Typography -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                        },
-                        nexus: {
-                            dark: '#090D16',
-                            card: '#111827',
-                            surface: '#1E293B',
-                            accent: '#38BDF8',
-                            glow: '#6366F1'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Inter', 'Noto Sans Devanagari', 'sans-serif'],
-                        display: ['Outfit', 'Plus Jakarta Sans', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <title>{% block title %}SarkariNexus 360 - Sarkari Result & Government Exam Portal 2026{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}SarkariNexus 360 - Government exam and recruitment portal. Latest notifications, apply links, admit cards and results.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}SarkariNexus, Sarkari Result, Sarkari Bharti 2026, Government Jobs 2026, Admit Card, Online Form, Results{% endblock %}">
+    <meta name="robots" content="{% block robots %}index,follow{% endblock %}">
+    <link rel="canonical" href="{% block canonical %}{{ request.base_url }}{{ request.url.path.lstrip('/') }}{% endblock %}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SarkariNexus 360">
+    <meta property="og:title" content="{{ self.title() }}">
+    <meta property="og:description" content="{{ self.meta_description() }}">
+    <meta property="og:url" content="{{ request.base_url }}{{ request.url.path.lstrip('/') }}">
+    <meta property="og:locale" content="hi_IN">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ self.title() }}">
+    <meta name="twitter:description" content="{{ self.meta_description() }}">
+    <meta name="theme-color" content="#090D16">
+
+    <link rel="stylesheet" href="/static/css/app.css">
     
     <!-- Font Awesome 6 Pro Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -128,6 +110,19 @@
             animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
         }
     </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "SarkariNexus 360",
+      "url": "{{ request.base_url }}",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "{{ request.base_url }}search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
     {% block head_extra %}{% endblock %}
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-white">
@@ -136,43 +131,43 @@
         <!-- 3D Ultra-Modern Top Navigation Bar -->
         <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
             <!-- Top Announcement Ticker -->
-            <div class="bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-white/5 py-1.5 px-4 text-xs text-slate-300">
-                <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 overflow-hidden whitespace-nowrap">
+            <div class="bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-white/5 py-1.5 px-3 sm:px-4 text-xs text-slate-300">
+                <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+                    <div class="flex items-center gap-2 overflow-hidden whitespace-nowrap min-w-0">
                         <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-pulse"></span> LIVE 3D ENGINE
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-pulse"></span> NOTIFICATION HUB
                         </span>
                         <span class="truncate text-slate-300 text-[11px] font-medium">
-                            ⚡ Real-Time Recruitment Feeds Auto-Synced across Central & All Indian States (studygovthelp.in + sarkariresult)
+                            Recruitment, admit card and result updates for Central & State government exams
                         </span>
                     </div>
                     <div class="hidden md:flex items-center gap-4 text-[11px] font-semibold text-slate-400 shrink-0">
-                        <span class="text-cyan-400"><i class="fa-solid fa-bolt mr-1"></i> Fast 3D UI</span>
-                        <span class="text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i> 100% Official Links</span>
+                        <span class="text-cyan-400"><i class="fa-solid fa-bolt mr-1"></i> Fast Loading</span>
+                        <span class="text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i> Official Portal Links</span>
                     </div>
                 </div>
             </div>
 
             <!-- Main Brand & Navigation -->
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                <div class="flex items-center justify-between gap-4">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+                <div class="flex items-center justify-between gap-2 sm:gap-4">
                     
                     <!-- Logo / Brand -->
-                    <a href="/" class="flex items-center gap-3 group">
-                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl shadow-lg shadow-cyan-500/25 group-hover:scale-105 group-hover:shadow-cyan-500/40 transition-all duration-300 border border-white/20">
+                    <a href="/" class="flex items-center gap-2.5 sm:gap-3 group shrink-0 min-w-0">
+                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white text-lg sm:text-xl shadow-lg shadow-cyan-500/25 group-hover:scale-105 group-hover:shadow-cyan-500/40 transition-all duration-300 border border-white/20 shrink-0">
                             <i class="fa-solid fa-cube"></i>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-heading text-2xl sm:text-3xl font-black tracking-tight text-white group-hover:text-cyan-400 transition">
+                                <span class="font-heading text-xl sm:text-3xl font-black tracking-tight text-white group-hover:text-cyan-400 transition whitespace-nowrap">
                                     Sarkari<span class="text-cyan-400">Nexus</span>
                                 </span>
-                                <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-md shadow-xs">
+                                <span class="hidden sm:inline-block text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-md shadow-xs">
                                     360™
                                 </span>
                             </div>
                             <p class="text-[11px] text-slate-400 font-medium -mt-1 hidden sm:block">
-                                Premier 3D Government Recruitment & Career Hub
+                                Government Recruitment & Exam Portal
                             </p>
                         </div>
                     </a>
@@ -203,12 +198,12 @@
                     </nav>
 
                     <!-- Search CTA & Mobile Toggle -->
-                    <div class="flex items-center gap-2.5">
-                        <a href="/search?q=" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-md shadow-cyan-500/20 transition flex items-center gap-1.5 transform active:scale-95">
+                    <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                        <a href="/search?q=" aria-label="Search exams" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs px-3 sm:px-4 py-2.5 rounded-xl shadow-md shadow-cyan-500/20 transition flex items-center gap-1.5 transform active:scale-95">
                             <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                            <span class="hidden sm:inline">Explore</span> Search
+                            <span class="hidden sm:inline">Search</span>
                         </a>
-                        <button onclick="document.getElementById('mobile-nav').classList.toggle('hidden')" class="lg:hidden w-10 h-10 rounded-xl bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 text-lg">
+                        <button onclick="var m=document.getElementById('mobile-nav');m.classList.toggle('hidden');this.setAttribute('aria-expanded',!m.classList.contains('hidden'))" aria-label="Open menu" aria-controls="mobile-nav" aria-expanded="false" class="lg:hidden w-10 h-10 rounded-xl bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 text-lg shrink-0">
                             <i class="fa-solid fa-bars"></i>
                         </button>
                     </div>
@@ -271,11 +266,11 @@
                         </span>
                     </div>
                     <p class="text-xs text-slate-400 leading-relaxed">
-                        Next-Generation 3D recruitment portal delivering instant verified government job notifications, admit cards, answer keys, and declared results with 100% official direct portals.
+                        Government recruitment portal for job notifications, admit cards, answer keys and declared results, with links to official commission portals where available.
                     </p>
                     <div class="pt-2 flex items-center gap-2 text-xs text-emerald-400 font-bold">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 live-pulse"></span>
-                        <span>Auto-Sync Active (Every 30 Min)</span>
+                        <span>Official Portal Links Where Available</span>
                     </div>
                 </div>
 
@@ -289,7 +284,7 @@
                         <li><a href="/category/Latest%20Jobs" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> All Online Application Forms</a></li>
                         <li><a href="/category/Admit%20Card" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Exam Hall Tickets &amp; City Intimation</a></li>
                         <li><a href="/category/Results" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Declared Results &amp; Merit Lists</a></li>
-                        <li><a href="/category/Answer%20Key" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Official Answer Keys</a></li>
+                        <li><a href="/category/Answer%20Key" class="hover:text-cyan-400 transition flex items-center gap-1.5"><i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i> Answer Keys &amp; Solutions</a></li>
                     </ul>
                 </div>
 
@@ -314,10 +309,10 @@
                         <i class="fa-solid fa-shield-check text-emerald-400"></i> Trust &amp; Transparency
                     </h4>
                     <ul class="space-y-2 text-xs">
-                        <li><a href="/about" class="hover:text-cyan-400 transition">About SarkariNexus 360</a></li>
+                        <li><a href="/about-us" class="hover:text-cyan-400 transition">About SarkariNexus 360</a></li>
                         <li><a href="/privacy-policy" class="hover:text-cyan-400 transition">Privacy Policy</a></li>
                         <li><a href="/disclaimer" class="hover:text-cyan-400 transition">Disclaimer &amp; Official Verification</a></li>
-                        <li><a href="/contact" class="hover:text-cyan-400 transition">Contact &amp; Support Team</a></li>
+                        <li><a href="/contact-us" class="hover:text-cyan-400 transition">Contact &amp; Support Team</a></li>
                     </ul>
                 </div>
 
@@ -326,7 +321,7 @@
             <div class="border-t border-slate-800/80 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
                 <p>&copy; 2026 <strong class="text-slate-300">SarkariNexus 360™</strong>. All Rights Reserved. Engineered for Speed and Accuracy.</p>
                 <p class="flex items-center gap-2">
-                    <span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> 100% Direct Official Government Portals</span>
+                    <span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> Links open official commission portals</span>
                 </p>
             </div>
         </div>

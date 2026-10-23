@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found (404) - SarkariNexus 360{% endblock %}
+{% block meta_description %}The page you requested could not be found. Browse the latest government exams, admit cards and results on SarkariNexus 360.{% endblock %}
+{% block robots %}noindex,follow{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-sm text-center space-y-5">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white flex items-center justify-center mx-auto text-3xl shadow-lg shadow-cyan-500/25">
+            <i class="fa-solid fa-compass"></i>
+        </div>
+        <div>
+            <span class="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
+                404 — Page Not Found
+            </span>
+            <h1 class="font-heading text-2xl sm:text-3xl font-black text-slate-900 mt-3">
+                यह पेज नहीं मिला (Page Not Found)
+            </h1>
+            <p class="text-sm text-slate-600 mt-2 max-w-xl mx-auto">
+                जिस लिंक पर आप आए हैं वह हटा दिया गया है, नाम बदल गया है, या गलत टाइप हुआ है। नीचे से सही पेज चुनें।
+            </p>
+        </div>
+
+        <form action="/search" method="GET" class="max-w-md mx-auto flex items-center gap-2">
+            <input type="text" name="q" placeholder="Search SSC, Railway, Police, Result..."
+                class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500">
+            <button type="submit" class="btn-3d-blue text-white font-bold text-sm px-5 py-2.5 rounded-xl shrink-0">
+                Search
+            </button>
+        </form>
+
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <a href="/" class="btn-3d-blue text-white font-bold text-xs px-4 py-2.5 rounded-xl">Home</a>
+            <a href="/category/Latest%20Jobs" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-200">Latest Jobs</a>
+            <a href="/category/Admit%20Card" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-200">Admit Card</a>
+            <a href="/category/Results" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-200">Results</a>
+            <a href="/search?q=" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-200">All Exams</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
