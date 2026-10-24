@@ -44,7 +44,7 @@ STATE_RULES = [
     ("Madhya Pradesh", ("madhya pradesh", "मध्य प्रदेश", "mppsc", "mpesb", "vyapam", "bhopal")),
     ("Haryana", ("haryana", "हरियाणा", "hssc", "hpsc", "htet", "panchkula")),
     ("Himachal Pradesh", ("himachal", "हिमाचल", "hppsc", "hpsssb", "hpssc", "shimla")),
-    ("Delhi", ("delhi", "दिल्ली", "dsssb", "delhi high court", "mcd", "दिल्ली नगर निगम")),
+    ("Delhi", ("delhi", "दिल्ली", "dsssb", "delhi high court", "mcd", "दिल्ली नगर निगम", "gnctd", "ndmc")),
     ("Maharashtra", ("maharashtra", "महाराष्ट्र", "mpsc", "mumbai", "pune", "nagpur")),
     ("Gujarat", ("gujarat", "गुजरात", "gpsc", "gsssb", "ojas")),
     ("Punjab", ("punjab", "पंजाब", "ppsc", "psssb", "pspcl")),
@@ -647,21 +647,26 @@ def is_root_url(url):
     return parsed.path in ("", "/")
 
 
+def _is_pdf_url(url):
+    return (url or "").lower().split("?")[0].endswith(".pdf")
+
+
 def should_keep_action_link(field, url, official_url, source_url):
     if not url:
         return False
     if is_aggregator(url):
         return False
     if source_url and url == source_url:
-        return False
+        # Commission notice boards publish the notice itself as a PDF, so the
+        # source of such a record is the document the candidate should open.
+        return _is_pdf_url(url)
     if official_url and url == official_url:
-        return field == "notification" and url.lower().split("?")[0].endswith(".pdf")
+        return field == "notification" and _is_pdf_url(url)
     if field in ("apply_online", "admit_card", "result", "answer_key", "previous_papers"):
         if is_root_url(url) and (field != "apply_online" or not official_url or _same_site(url, official_url)):
             return False
     if field == "notification":
-        low = url.lower()
-        if low.split("?")[0].endswith(".pdf"):
+        if _is_pdf_url(url):
             return True
         if is_root_url(url):
             return False

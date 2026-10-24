@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 
 from database import create_exam, get_db, init_db, log_sync, update_exam
 from data_quality import (
+    CANONICAL_STATUSES,
     clean_text,
     clean_title,
     clean_url,
@@ -206,6 +207,7 @@ def _extract_facts(scope):
         "vacancies": "",
         "mode": "",
         "advt_no": "",
+        "status": "",
         "location": "",
         "official_site": "",
         "pay_level": "",
@@ -281,6 +283,11 @@ def _extract_facts(scope):
                 r"\b(?:no|number)\b", key
             ):
                 facts["advt_no"] = value
+            elif key in ("status", "notice status", "application status", "posting status"):
+                # Only a wording the portal itself uses is accepted, so a page
+                # writing "Notified"/"Online" here cannot corrupt the badge.
+                if value.strip().title() in CANONICAL_STATUSES:
+                    facts["status"] = value.strip().title()
             elif "application mode" in key:
                 facts["mode"] = value
             elif key in ("job location", "location", "job posting"):
@@ -619,7 +626,7 @@ def _parse_item(title, html_text, source_url, post_date, source_name):
         "board_name": board[:160],
         "total_vacancies": facts["vacancies"] or "Various Posts",
         "short_description": short[:320],
-        "status": "",
+        "status": facts["status"],
         "notification_date": notification_date,
         "apply_start_date": apply_start,
         "apply_last_date": apply_last,

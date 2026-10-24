@@ -15,10 +15,12 @@ from datetime import datetime, timedelta
 from content_fill import run_fill
 from database import auto_cleanup_expired_exams, get_db, init_db
 from extra_sources import sync_from_freejobalert, sync_from_rojgarresult
+from psc_official_scraper import sync_from_state_pscs
 from sarkariresult_crawler import sync_from_sarkariresult
 from source_cleanup import prune_removed_exams
 from studygovthelp_scraper import sync_from_studygovthelp
 from telegram_poster import broadcast
+from upsc_scraper import sync_from_upsc
 
 
 def _count_exams():
@@ -40,6 +42,11 @@ def main():
     parser.add_argument("--extra-days", type=int, default=90, help="lookback window for extra sources")
     parser.add_argument("--rr-pages", type=int, default=5, help="RojgarResult API pages (100 posts each)")
     parser.add_argument("--fja-limit", type=int, default=25, help="FreeJobAlert detail pages per run")
+    parser.add_argument("--skip-upsc", action="store_true", help="skip UPSC official notices")
+    parser.add_argument("--upsc-limit", type=int, default=25, help="UPSC notice pages to read per run")
+    parser.add_argument("--skip-psc", action="store_true", help="skip state PSC notice boards (UPPSC, MPPSC)")
+    parser.add_argument("--psc-days", type=int, default=120, help="only file dated PSC notices newer than this")
+    parser.add_argument("--psc-limit", type=int, default=60, help="PSC notices to file per commission per run")
     parser.add_argument("--no-prune", action="store_true", help="keep exams even if their source post is deleted")
     parser.add_argument("--prune-dry-run", action="store_true", help="check deleted source posts without removing")
     parser.add_argument("--prune-limit", type=int, default=150, help="source URLs to re-check per source per run")
@@ -95,6 +102,28 @@ def main():
         except Exception as exc:
             errors.append(f"freejobalert: {exc}")
             results["freejobalert"] = {"status": "error", "message": str(exc)}
+
+    if not args.skip_psc:
+        try:
+            for key, result in sync_from_state_pscs(
+                days=max(1, args.psc_days),
+                limit=max(0, args.psc_limit),
+            ).items():
+                result.pop("_seen_urls", None)
+                results[key] = result
+        except Exception as exc:
+            errors.append(f"state pscs: {exc}")
+            results["psc"] = {"status": "error", "message": str(exc)}
+
+    if not args.skip_upsc:
+        try:
+            results["upsc"] = sync_from_upsc(limit=max(0, args.upsc_limit))
+            # The What's New block is a rolling list, so a notice that is no
+            # longer shown there was not deleted; UPSC rows are never pruned.
+            results["upsc"].pop("_seen_urls", None)
+        except Exception as exc:
+            errors.append(f"upsc: {exc}")
+            results["upsc"] = {"status": "error", "message": str(exc)}
 
     seen_by_source = {}
     for source in ("studygovthelp", "rojgarresult", "freejobalert"):
