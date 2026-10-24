@@ -8,12 +8,13 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
 
     <!-- ================= 3D HERO COMMAND CENTER ================= -->
-    <div class="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 border border-slate-800 shadow-2xl p-6 sm:p-10 text-white">
+    <div id="heroStage" class="relative rounded-3xl overflow-hidden hero-stage hero-t0 border border-slate-800 shadow-2xl p-6 sm:p-10 text-white">
         <!-- 3D Glow Orbs Background -->
-        <div class="absolute -top-24 -left-24 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl pointer-events-none hero-orb-a"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl pointer-events-none hero-orb-b"></div>
+        <div class="hero-sheen"></div>
         
-        <div class="relative z-10 max-w-3xl mx-auto text-center space-y-4">
+        <div class="relative z-10 max-w-3xl mx-auto text-center space-y-4 hero-content-3d">
             
             <!-- Live Badge -->
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs shadow-inner">
@@ -25,7 +26,7 @@
 
             <!-- Main Heading -->
             <h1 class="font-heading text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
-                Sarkari<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400">Nexus 360</span>
+                <span class="hero-word-a">Sarkari</span><span class="hero-word-b">Nexus 360</span>
                 <br>
                 <span class="text-lg sm:text-2xl md:text-3xl font-bold text-slate-200 block mt-1">
                     सरकारी रिजल्ट व भर्ती सूचना केंद्र 2026
@@ -400,4 +401,40 @@
     </div>
 
 </div>
+
+<script>
+(function () {
+    var stage = document.getElementById('heroStage');
+    if (!stage) return;
+    var themes = 8, current = 0;
+    setInterval(function () {
+        current = (current + 1) % themes;
+        stage.className = stage.className.replace(/hero-t\d/, 'hero-t' + current);
+    }, 5000);
+
+    var MAX_TILT = 4;
+    function tilt(e) {
+        var r = stage.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width - 0.5;
+        var y = (e.clientY - r.top) / r.height - 0.5;
+        stage.style.setProperty('--ry', (x * MAX_TILT * 2).toFixed(2) + 'deg');
+        stage.style.setProperty('--rx', (-y * MAX_TILT * 2).toFixed(2) + 'deg');
+        stage.style.setProperty('--mx', (((e.clientX - r.left) / r.width) * 100).toFixed(1) + '%');
+        stage.style.setProperty('--my', (((e.clientY - r.top) / r.height) * 100).toFixed(1) + '%');
+    }
+    function reset() {
+        stage.style.setProperty('--rx', '0deg');
+        stage.style.setProperty('--ry', '0deg');
+    }
+    stage.addEventListener('pointermove', tilt);
+    stage.addEventListener('pointerleave', reset);
+
+    function onScroll() {
+        var depth = Math.min(1, window.scrollY / 420);
+        stage.style.setProperty('--push', (-90 * depth).toFixed(1) + 'px');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+})();
+</script>
 {% endblock %}

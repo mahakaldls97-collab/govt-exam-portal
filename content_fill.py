@@ -293,11 +293,22 @@ def fill_exam(exam):
 
 
 _TITLE_VACANCY = re.compile(
-    r"\b(\d{1,3}(?:,\d{3})+|\d{2,6})\b([\s\w\u0900-\u097F,()/.\-]{0,28}?)\b(?:posts?|vacanc\w*|seats?|पद|पदों|रिक्तियां)\b", re.I)
+    r"\b(\d{1,3}(?:,\d{3})+|\d{2,6})\b([\sA-Za-z\u0900-\u097F,()/.\-+]{0,28}?)\b(?:posts?|vacanc\w*|seats?|पद|पदों|रिक्तियां)\b", re.I)
 _TITLE_VACANCY_FOR = re.compile(r"\b(?:for|of|के लिए)\s*(\d{1,3}(?:,\d{3})+|\d{2,6})\b\s*(?:posts?|seats?|पद|vacanc)?", re.I)
 _MULTIPLIERS = (("हजार", 1000), ("thousand", 1000), ("लाख", 100000), ("lakh", 100000))
 _SLUG_VACANCY = re.compile(r"-(\d{2,6})(?:-\d{1,3})?$")
 _YEAR_RANGE = range(1900, 2101)
+_CONNECTIVES = {"", "of", "for", "in", "the", "ke", "के", "का", "की", "में", "से", "and", "एवं", "&"}
+
+
+def _year_like_is_posts(number, gap):
+    """`2008 अप्रेंटिस पदों` is a post count; `2026 के पद` is a year."""
+    if number not in _YEAR_RANGE:
+        return True
+    g = (gap or "").strip().lower()
+    if g in _CONNECTIVES or len(g) > 14 or any(c.isdigit() for c in g):
+        return False
+    return not any(w in g for w in ("recruit", "notification", "result", "admit", "answer"))
 
 
 def vacancy_from_heading(title, slug):
@@ -311,15 +322,15 @@ def vacancy_from_heading(title, slug):
             if token in gap:
                 number *= factor
                 break
-        numbers.append(number)
+        numbers.append((number, gap))
     for match in _TITLE_VACANCY_FOR.finditer(str(title or "")):
-        numbers.append(int(match.group(1).replace(",", "")))
+        numbers.append((int(match.group(1).replace(",", "")), ""))
     if not numbers:
         match = _SLUG_VACANCY.search(str(slug or ""))
         if match:
-            numbers.append(int(match.group(1)))
-    for number in numbers:
-        if number in _YEAR_RANGE or number > 500000:
+            numbers.append((int(match.group(1)), ""))
+    for number, gap in numbers:
+        if number > 500000 or not _year_like_is_posts(number, gap):
             continue
         return f"{number:,} Posts"
     return ""
