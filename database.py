@@ -242,7 +242,8 @@ def get_all_exams(limit=100, category=None, search=None, status=None, state=None
         elif cat_clean in ('answer key', 'answer keys', 'answer', 'उत्तर कुंजी'):
             query += " AND (status = 'Answer Key' OR title LIKE '%Answer Key%' OR title LIKE '%उत्तर कुंजी%')"
         elif cat_clean in ('syllabus', 'exam pattern', 'पाठ्यक्रम'):
-            query += " AND (syllabus_summary IS NOT NULL AND length(syllabus_summary) > 5 OR title LIKE '%Syllabus%' OR title LIKE '%पाठ्यक्रम%')"
+            query += (" AND (LOWER(title) LIKE '%syllabus%' OR LOWER(title) LIKE '%exam pattern%'"
+                      " OR title LIKE '%पाठ्यक्रम%' OR title LIKE '%परीक्षा पैटर्न%' OR title LIKE '%सिलेबस%')")
         else:
             query += " AND LOWER(category) = LOWER(?)"
             params.append(category)
@@ -506,9 +507,11 @@ def get_stats():
     }
 
 def auto_cleanup_expired_exams():
-    """Refresh statuses from real dates and archive very old updates.
+    """Refresh statuses from real dates.
 
-    Applications Open -> Upcoming -> Admit Card -> Result -> Archived.
+    Applications Open -> Upcoming -> Admit Card -> Result. Exams are hidden
+    only when the source post itself is gone (source_cleanup.py), not merely
+    because their dates are old, so historical exams stay readable.
     Title keywords always win (an update titled "Result" is never reopened).
     """
     conn = get_db()
@@ -532,11 +535,6 @@ def auto_cleanup_expired_exams():
         exam = dict(row)
         current = exam.get('status') or ''
         title = exam.get('title') or ''
-        title_low = title.lower()
-        explicit = any(k in title_low for k in (
-            'result', 'रिजल्ट', 'merit list', 'score card', 'scorecard', 'cut off', 'cutoff',
-            'answer key', 'admit card', 'hall ticket', 'city intimation', 'final list',
-        ))
 
         new_status = canonical_status(
             current, title,
@@ -547,20 +545,6 @@ def auto_cleanup_expired_exams():
             exam.get('notification_date') or '',
             today=today,
         )
-
-        last_dt = parse_date(exam.get('apply_last_date'))
-        exam_dt = parse_date(exam.get('exam_date'))
-        result_dt = parse_date(exam.get('result_date'))
-        known_dates = [d for d in (
-            result_dt, exam_dt, last_dt, parse_date(exam.get('notification_date')),
-        ) if d]
-        latest_known = max(known_dates) if known_dates else None
-
-        if explicit and latest_known and (today - latest_known).days > 365:
-            new_status = 'Archived'
-        elif (not explicit and last_dt and (today - last_dt).days > 180
-              and (not exam_dt or exam_dt < today)):
-            new_status = 'Archived'
 
         if new_status == current:
             continue
