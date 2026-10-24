@@ -277,7 +277,10 @@ def get_all_exams(limit=100, category=None, search=None, status=None, state=None
         term = search.strip()
         params.extend([term] * 8)
         
-    query += " ORDER BY updated_at DESC LIMIT ?"
+    # Newest source post first. updated_at alone re-ranks old exams whenever a
+    # maintenance pass touches them, so the source date drives the order.
+    query += (" ORDER BY CASE WHEN notification_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'"
+              " THEN notification_date ELSE date(updated_at) END DESC, updated_at DESC LIMIT ?")
     params.append(limit)
     
     cursor.execute(query, params)
@@ -518,7 +521,6 @@ def auto_cleanup_expired_exams():
     cursor = conn.cursor()
     now = datetime.now(IST)
     today = now.date()
-    stamp = now.strftime('%Y-%m-%d %H:%M:%S')
     moved_to_admit = 0
     moved_to_result = 0
     archived = 0
@@ -556,8 +558,8 @@ def auto_cleanup_expired_exams():
             'Archived': 'gray',
         }.get(new_status, 'slate')
         cursor.execute(
-            "UPDATE exams SET status = ?, badge_color = ?, updated_at = ? WHERE id = ?",
-            (new_status, badge, stamp, exam['id'])
+            "UPDATE exams SET status = ?, badge_color = ? WHERE id = ?",
+            (new_status, badge, exam['id'])
         )
         if new_status == 'Admit Card':
             moved_to_admit += 1

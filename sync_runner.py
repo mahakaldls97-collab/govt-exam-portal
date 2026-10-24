@@ -12,11 +12,13 @@ import json
 import sys
 from datetime import datetime, timedelta
 
+from content_fill import run_fill
 from database import auto_cleanup_expired_exams, get_db, init_db
 from extra_sources import sync_from_freejobalert, sync_from_rojgarresult
 from sarkariresult_crawler import sync_from_sarkariresult
 from source_cleanup import prune_removed_exams
 from studygovthelp_scraper import sync_from_studygovthelp
+from telegram_poster import broadcast
 
 
 def _count_exams():
@@ -41,6 +43,9 @@ def main():
     parser.add_argument("--no-prune", action="store_true", help="keep exams even if their source post is deleted")
     parser.add_argument("--prune-dry-run", action="store_true", help="check deleted source posts without removing")
     parser.add_argument("--prune-limit", type=int, default=150, help="source URLs to re-check per source per run")
+    parser.add_argument("--tg-limit", type=int, default=15, help="max new exams announced to Telegram per run")
+    parser.add_argument("--no-telegram", action="store_true", help="skip the Telegram broadcast")
+    parser.add_argument("--telegram-dry-run", action="store_true", help="build Telegram posts without sending them")
     args = parser.parse_args()
 
     run_sarkari = args.include_sarkari and not args.skip_sarkari
@@ -120,7 +125,27 @@ def main():
                 errors.append(f"cleanup {source}: {exc}")
                 pruned[source] = {"status": "error", "message": str(exc)}
 
+    fill_stats = {}
+    try:
+        fill_conn = get_db()
+        fill_stats = run_fill(fill_conn, apply_changes=True)
+        fill_conn.close()
+        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] content fill: "
+              f"{fill_stats['filled']} of {fill_stats['exams']} exams gained details.")
+    except Exception as exc:
+        errors.append(f"content fill: {exc}")
+
     cleanup = auto_cleanup_expired_exams()
+
+    telegram = {}
+    if not args.no_telegram:
+        try:
+            telegram = broadcast(limit=args.tg_limit, dry_run=args.telegram_dry_run)
+            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] telegram: "
+                  f"{telegram['sent']} sent, {telegram['failed']} failed, "
+                  f"{telegram['skipped']} skipped, backlog marked {telegram['bootstrapped']}.")
+        except Exception as exc:
+            errors.append(f"telegram: {exc}")
     after = _count_exams()
 
     ok_sources = [
@@ -133,6 +158,8 @@ def main():
         "exams_before": before,
         "exams_after": after,
         "cleanup": cleanup,
+        "content_fill": {k: v for k, v in fill_stats.items() if k != "messages"},
+        "telegram": {k: v for k, v in telegram.items() if k != "messages"},
         "pruned": pruned,
         "sources": results,
         "errors": errors,
